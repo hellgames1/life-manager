@@ -70,7 +70,9 @@ tx = {
     }
 }
 lan = "en"
-
+############IMPORT AND MAIN SETTINGS####################
+#region
+print("Importing libraries...")
 import pygame
 import json
 from sys import exit as terminate_program
@@ -78,8 +80,10 @@ pygame.init()
 DISPLAY = pygame.display.set_mode((1024,600),0,32)
 WHITE = (255,255,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
+#endregion
 ############KEYBOARD INITIALIZE#########################
 #region
+print("Initializing keyboard...")
 my_font = pygame.font.Font("calibri.ttf", 72)
 my_font_m = pygame.font.Font("calibri.ttf", 48)
 my_font_s = pygame.font.Font("calibri.ttf", 36)
@@ -128,303 +132,8 @@ digit_special_keys.append([125,300,150,100,"X",False])
 digit_special_keys.append([350,500,100,100,"C",False])
 digit_special_keys.append([200,500,100,100,"֍",False])
 digit_special_keys.append([550,500,100,100,".",False])
-###################################################
-#endregion
 
-############COLOR PICKER INITIALIZE#####################
-#region
-colors_pick=[]
-colors_pick.append([(200, 0, 200), (200, 250, 90, 90)])
-colors_pick.append([(200, 0, 0), (300, 250, 90, 90)])
-colors_pick.append([(200, 200, 0), (400, 250, 90, 90)])
-colors_pick.append([(0, 200, 0), (500, 250, 90, 90)])
-colors_pick.append([(0, 200, 200), (600, 250, 90, 90)])
-colors_pick.append([(0, 0, 0), (700, 250, 90, 90)])
-colors_pick.append([(127, 127, 127), (200, 350, 90, 90)])
-colors_pick.append([(0, 0, 200), (300, 350, 90, 90)])
-colors_pick.append([(230, 170, 0), (400, 350, 90, 90)])
-colors_pick.append([(150, 120, 0), (500, 350, 90, 90)])
-colors_pick.append([(0, 120, 0), (600, 350, 90, 90)])
-colors_pick.append([(250, 50, 150), (700, 350, 90, 90)])
-#########################################################
-#endregion
-
-db_dbname=""
-db_name=""
-db_nums = []
-db_bools = []
-db_editingname = ""
-db_editingdefault = 0
-db_editingcol = (0,0,0)
-db_length=365
-
-
-message_show = False
-message_to_show = "You can't leave@any field empty!"
-message_ok_hl = False
-
-colorpicker_show = False
-colorpicker_displaytext = "error"
-colorpicker_currentcol = (0,0,0)
-colorpicker_ok_hl = False
-colorpicker_tovar=""
-colorpicker_okfunc=""
-
-def display_colorpicker(tovar,displaytext,okfunc):
-    global colorpicker_show
-    global colorpicker_ok_hl
-    global colorpicker_currentcol
-    global colorpicker_tovar
-    global colorpicker_okfunc
-    global colorpicker_displaytext
-    colorpicker_displaytext = displaytext
-    colorpicker_okfunc = okfunc
-    colorpicker_tovar = tovar
-    colorpicker_currentcol = globals()[tovar]
-    colorpicker_ok_hl = False
-    colorpicker_show = True
-
-def draw_colorpicker():
-    global colors_pick
-    global colorpicker_currentcol
-    global colorpicker_displaytext
-    for color in colors_pick:
-        pygame.draw.rect(DISPLAY, color[0],color[1])
-    if colorpicker_ok_hl:
-        pygame.draw.rect(DISPLAY,(127,127,127),(406,500,212,75))
-
-
-    name_surface = my_font.render(tx[lan]["choosecolor"], False, (0, 0, 0))
-    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 20))
-
-    name_surface = my_font_m.render(colorpicker_displaytext, False, colorpicker_currentcol)
-    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 170))
-
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,500,212,75), 5)
-    name_surface = my_font_m.render("OK", False, (0, 0, 0))
-    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 537-name_surface.get_size()[1]/2))
-def colorpicker_highlight():
-    global colorpicker_ok_hl
-    global colorpicker_currentcol
-    if pygame.Rect(406,500,212,75).collidepoint(pygame.mouse.get_pos()):
-        colorpicker_ok_hl = True
-    else:
-        for color in colors_pick:
-            if pygame.Rect(color[1]).collidepoint(pygame.mouse.get_pos()):
-                colorpicker_currentcol=color[0]
-def colorpicker_press():
-    global colorpicker_ok_hl
-    global colorpicker_tovar
-    global colorpicker_currentcol
-    global colorpicker_show
-    if colorpicker_ok_hl:
-        colorpicker_ok_hl = False
-        globals()[colorpicker_tovar] = colorpicker_currentcol
-        exec(colorpicker_okfunc)
-        colorpicker_currentcol=(0,0,0)
-        colorpicker_show = False
-
-
-def display_message(title):
-    global message_show
-    global message_ok_hl
-    global message_to_show
-    message_to_show = title
-    message_ok_hl = False
-    message_show = True
-def draw_message():
-    global message_to_show
-    messages = message_to_show.split("@")
-    name_surfaces=[]
-    heights=[]
-    total_height=0
-    index=0
-    for message in messages:
-        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
-        total_height += name_surfaces[index].get_size()[1]+10
-        heights.append(total_height)
-        index+=1
-    for index, surface in enumerate(name_surfaces):
-        DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
-
-    if message_ok_hl:
-        pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
-
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
-    name_surface = my_font_m.render("OK", False, (0, 0, 0))
-    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
-def message_highlight():
-    global message_ok_hl
-    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
-        message_ok_hl = True
-def message_press():
-    global message_ok_hl
-    global message_to_show
-    global message_show
-    if message_ok_hl:
-        message_ok_hl = False
-        message_to_show = "Error"
-        message_show = False
-def createdb():
-    global menu_current
-    print("creating")
-    db={}
-    db["dbname"] = db_dbname
-    db["name"] = db_name
-    db["intnames"] = []
-    db["intdefs"] = []
-    db["intcols"] = []
-    for index,nam in enumerate(db_nums):
-        db["intnames"].append(nam[0])
-        db["intdefs"].append(nam[1])
-        db["intcols"].append(nam[2])
-    db["boolnames"] = []
-    db["booldefs"] = []
-    db["boolcols"] = []
-    for index,nam in enumerate(db_bools):
-        db["boolnames"].append(nam[0])
-        db["booldefs"].append(nam[1])
-        db["boolcols"].append(nam[2])
-    db["days"]=[]
-    day = {"reminder": "", "ints": [], "bools": []}
-    day["ints"]=db["intdefs"]
-    day["bools"]=db["booldefs"]
-    for i in range(db_length):
-        db["days"].append(day)
-    with open(db_dbname, 'w') as outfile:
-        json.dump(db, outfile)
-        menu_current = 0
-        display_message(tx[lan]["database"]+"@"+db_dbname+"@"+tx[lan]["created"])
-
-##################################################
-menu_current = 0
-last_button = -1
-menus = [[],[],[],[],[]]
-# if label, no w or h applicable, if centered, only y applicable
-# if centered button, no x applicable
-# type||xpos||ypos||w||h||center||text||font||highlighted
-# 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
-def buildmenus():
-    global menus
-    menus = [[],[],[],[],[]]
-    menus[0].append(["label",-1,100,-1,-1,True,tx[lan]["welcometo"],"large",False])
-    menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
-    menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
-    menus[0].append(["button",-1,450,450,80,True,tx[lan]["exitpr"],"medium",False])
-    menus[0].append(["button",920,20,80,50,False,tx[lan]["otherlang"],"medium",False])
-
-    menus[1].append(["label",-1,0,-1,-1,True,tx[lan]["dbcreation"],"large",False])
-    menus[1].append(["label",50,200,-1,-1,False,tx[lan]["dbname"],"medium",False])
-    menus[1].append(["textfield",360,200,600,50,False,"db_dbname","medium",False])
-    menus[1].append(["label",50,300,-1,-1,False,tx[lan]["urname"],"medium",False])
-    menus[1].append(["textfield",360,300,600,50,False,"db_name","medium",False])
-    menus[1].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
-    menus[1].append(["button",25,500,250,75,False,tx[lan]["cancel"],"medium",False])
-    menus[1].append(["label",50,400,-1,-1,False,tx[lan]["howmanydays"],"medium",False])
-    menus[1].append(["textfield",400,400,300,50,False,"db_length","medium",False])
-
-    menus[2].append(["label",-1,0,-1,-1,True,tx[lan]["setvaluestrack"],"medium",False])
-    menus[2].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[2].append(["button",-1,525,270,50,True,tx[lan]["addvalue"],"small",False])
-    menus[2].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
-    menus[2].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
-    menus[2].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
-    menus[2].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
-
-    menus[3].append(["label",-1,0,-1,-1,True,tx[lan]["setcheckstrack"],"medium",False])
-    menus[3].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
-    menus[3].append(["button",-1,525,270,50,True,tx[lan]["addcheck"],"small",False])
-    menus[3].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
-    menus[3].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
-    menus[3].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
-    menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
-
-buildmenus()
-
-def draw_menu(phase=0):
-    for index,item in enumerate(menus[phase]):
-        if item[0] == "label" or item[0] == "clabel":
-            color = (0, 0, 0)
-            if item[0] == "clabel":
-                color=item[9]
-            if item[7] == "large":
-                name_surface = my_font.render(item[6], False, color )
-            elif item[7] == "medium":
-                name_surface = my_font_m.render(item[6], False, color )
-            elif item[7] == "small":
-                name_surface = my_font_s.render(item[6], False, color )
-            if item[5] == True: # if centered
-                DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]))
-            else: # if not centered
-                DISPLAY.blit(name_surface, (item[1], item[2]))
-        elif item[0] == "button" or item[0] == "textfield":
-            if item[0] == "button":
-                label=item[6]
-            else:
-                label=str(globals()[item[6]])
-            if item[7] == "large":
-                name_surface = my_font.render(label, False, (0, 0, 0))
-            elif item[7] == "medium":
-                name_surface = my_font_m.render(label, False, (0, 0, 0))
-            elif item[7] == "small":
-                name_surface = my_font_s.render(label, False, (0, 0, 0))
-            if item[5] == True: # if centered
-                if item[8]:
-                    pygame.draw.rect(DISPLAY,(127,127,127),(512-(item[3]/2),item[2],item[3],item[4]))
-                DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
-                pygame.draw.rect(DISPLAY,(0,0,0),(512-(item[3]/2),item[2],item[3],item[4]),5)
-            else: # if not centered
-                if item[8]:
-                    pygame.draw.rect(DISPLAY,(127,127,127),(item[1],item[2],item[3],item[4]))
-                DISPLAY.blit(name_surface, (item[1]+item[3]/2-(name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
-                pygame.draw.rect(DISPLAY,(0,0,0),(item[1],item[2],item[3],item[4]),5)
-def menu_highlight():
-    global last_button
-    global menu_current
-    for index,button in enumerate(menus[menu_current]):
-        if button[5] == True:
-            iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
-        else:
-            iscolliding = pygame.Rect(button[1], button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
-        if iscolliding:
-            button[8] = True
-            last_button = index
-            break
-def start_creating_db():
-    global menu_current
-    menu_current=1
-def okfuncs(which,misc=""):
+def okfuncs(which):
     global db_editingcol
     if which==0:
         global db_dbname
@@ -457,59 +166,6 @@ def okfuncs(which,misc=""):
             db_bools.append([db_editingname,True,db_editingcol])
         else:
             db_bools.append([db_editingname,False,db_editingcol])
-def menu_press():
-    global last_button
-    global menu_current
-    global lan
-    if last_button != -1:
-        button = menus[menu_current][last_button]
-        button[8] = False
-        last_button = -1
-        if button is menus[0][3]:
-            terminate_program()
-        elif button is menus[0][1]:
-            menu_current = 1
-        elif button is menus[0][4]:
-            print("haha")
-            if lan=="en":
-                lan="bg"
-            else:
-                lan="en"
-            buildmenus()
-        elif button is menus[1][2]:
-            display_keyboard(tx[lan]["nameurdb"], "db_dbname", digital=False, switchable=True, begin_with_upper=False,fraction=True, default_text=db_dbname,okfunc='okfuncs(0)')
-        elif button is menus[1][4]:
-            display_keyboard(tx[lan]["wasurname"],"db_name",digital=False,switchable=False,begin_with_upper=True,fraction=True,default_text=db_name,multilingual=True)
-        elif button is menus[1][5]:
-            if db_dbname == "":
-                display_message(tx[lan]["dbcantbeempty"])
-            elif db_name == "":
-                display_message(tx[lan]["mustfillname"])
-            elif db_length <= 0:
-                display_message(tx[lan]["dblengthmust"])
-            else:
-                menu_current = 2
-        elif button is menus[1][6]:
-            menu_current = 0
-        elif button is menus[1][8]:
-            display_keyboard(tx[lan]["howmanydays"],"db_length",digital=True,switchable=False,begin_with_upper=True,fraction=False,default_text=db_length)
-        elif button is menus[2][10]:
-            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(1)",multilingual=True)
-        elif button is menus[2][11]:
-            menu_current = 1
-        elif button is menus[2][12]:
-            menu_current = 3
-        elif button is menus[3][10]:
-            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(3)",multilingual=True)
-        elif button is menus[3][11]:
-            menu_current = 2
-        elif button is menus[3][12]:
-            createdb()
-        for i in range(13,22):
-            if button is menus[2][i]:
-                db_nums.pop(i-13)
-            elif button is menus[3][i]:
-                db_bools.pop(i-13)
 def hide_keyboard():
     global keyboard_shown
     global keyboard_entry
@@ -737,9 +393,362 @@ def draw_keyboard():
     DISPLAY.blit(name_surface,  (512-(name_surface.get_size()[0] / 2),100))
     name_surface = my_font_m.render("Please enter your name", False, (0, 0, 0))
     DISPLAY.blit(name_surface,  (512-(name_surface.get_size()[0] / 2),200))"""
-counter = 0
-testcol = (0,0,0)
+###################################################
+#endregion
 
+############COLOR PICKER INITIALIZE#####################
+#region
+print("Initializing color picker...")
+colorpicker_show = False
+colorpicker_displaytext = "error"
+colorpicker_currentcol = (0,0,0)
+colorpicker_ok_hl = False
+colorpicker_tovar=""
+colorpicker_okfunc=""
+
+colors_pick=[]
+colors_pick.append([(200, 0, 200), (200, 250, 90, 90)])
+colors_pick.append([(200, 0, 0), (300, 250, 90, 90)])
+colors_pick.append([(200, 200, 0), (400, 250, 90, 90)])
+colors_pick.append([(0, 200, 0), (500, 250, 90, 90)])
+colors_pick.append([(0, 200, 200), (600, 250, 90, 90)])
+colors_pick.append([(0, 0, 0), (700, 250, 90, 90)])
+colors_pick.append([(127, 127, 127), (200, 350, 90, 90)])
+colors_pick.append([(0, 0, 200), (300, 350, 90, 90)])
+colors_pick.append([(230, 170, 0), (400, 350, 90, 90)])
+colors_pick.append([(150, 120, 0), (500, 350, 90, 90)])
+colors_pick.append([(0, 120, 0), (600, 350, 90, 90)])
+colors_pick.append([(250, 50, 150), (700, 350, 90, 90)])
+
+def display_colorpicker(tovar,displaytext,okfunc):
+    global colorpicker_show
+    global colorpicker_ok_hl
+    global colorpicker_currentcol
+    global colorpicker_tovar
+    global colorpicker_okfunc
+    global colorpicker_displaytext
+    colorpicker_displaytext = displaytext
+    colorpicker_okfunc = okfunc
+    colorpicker_tovar = tovar
+    colorpicker_currentcol = globals()[tovar]
+    colorpicker_ok_hl = False
+    colorpicker_show = True
+def draw_colorpicker():
+    global colors_pick
+    global colorpicker_currentcol
+    global colorpicker_displaytext
+    for color in colors_pick:
+        pygame.draw.rect(DISPLAY, color[0],color[1])
+    if colorpicker_ok_hl:
+        pygame.draw.rect(DISPLAY,(127,127,127),(406,500,212,75))
+
+
+    name_surface = my_font.render(tx[lan]["choosecolor"], False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 20))
+
+    name_surface = my_font_m.render(colorpicker_displaytext, False, colorpicker_currentcol)
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 170))
+
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,500,212,75), 5)
+    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 537-name_surface.get_size()[1]/2))
+def colorpicker_highlight():
+    global colorpicker_ok_hl
+    global colorpicker_currentcol
+    if pygame.Rect(406,500,212,75).collidepoint(pygame.mouse.get_pos()):
+        colorpicker_ok_hl = True
+    else:
+        for color in colors_pick:
+            if pygame.Rect(color[1]).collidepoint(pygame.mouse.get_pos()):
+                colorpicker_currentcol=color[0]
+def colorpicker_press():
+    global colorpicker_ok_hl
+    global colorpicker_tovar
+    global colorpicker_currentcol
+    global colorpicker_show
+    if colorpicker_ok_hl:
+        colorpicker_ok_hl = False
+        globals()[colorpicker_tovar] = colorpicker_currentcol
+        exec(colorpicker_okfunc)
+        colorpicker_currentcol=(0,0,0)
+        colorpicker_show = False
+#########################################################
+#endregion
+
+###########DB EDITOR INITALIZE##########################
+#region
+print("Initializing database editor...")
+db_dbname=""
+db_name=""
+db_nums = []
+db_bools = []
+db_editingname = ""
+db_editingdefault = 0
+db_editingcol = (0,0,0)
+db_length=365
+def createdb():
+    global menu_current
+    print("creating")
+    db={}
+    db["dbname"] = db_dbname
+    db["name"] = db_name
+    db["intnames"] = []
+    db["intdefs"] = []
+    db["intcols"] = []
+    for index,nam in enumerate(db_nums):
+        db["intnames"].append(nam[0])
+        db["intdefs"].append(nam[1])
+        db["intcols"].append(nam[2])
+    db["boolnames"] = []
+    db["booldefs"] = []
+    db["boolcols"] = []
+    for index,nam in enumerate(db_bools):
+        db["boolnames"].append(nam[0])
+        db["booldefs"].append(nam[1])
+        db["boolcols"].append(nam[2])
+    db["days"]=[]
+    day = {"reminder": "", "ints": [], "bools": []}
+    day["ints"]=db["intdefs"]
+    day["bools"]=db["booldefs"]
+    for i in range(db_length):
+        db["days"].append(day)
+    with open(db_dbname, 'w') as outfile:
+        json.dump(db, outfile)
+        menu_current = 0
+        display_message(tx[lan]["database"]+"@"+db_dbname+"@"+tx[lan]["created"])
+#endregion
+
+###########MESSAGE ENGINE INITIALIZE####################
+#region
+print("Initializing message engine...")
+message_show = False
+message_to_show = "You can't leave@any field empty!"
+message_ok_hl = False
+
+def display_message(title):
+    global message_show
+    global message_ok_hl
+    global message_to_show
+    message_to_show = title
+    message_ok_hl = False
+    message_show = True
+def draw_message():
+    global message_to_show
+    messages = message_to_show.split("@")
+    name_surfaces=[]
+    heights=[]
+    total_height=0
+    index=0
+    for message in messages:
+        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
+        total_height += name_surfaces[index].get_size()[1]+10
+        heights.append(total_height)
+        index+=1
+    for index, surface in enumerate(name_surfaces):
+        DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
+
+    if message_ok_hl:
+        pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
+
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
+    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
+def message_highlight():
+    global message_ok_hl
+    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
+        message_ok_hl = True
+def message_press():
+    global message_ok_hl
+    global message_to_show
+    global message_show
+    if message_ok_hl:
+        message_ok_hl = False
+        message_to_show = "Error"
+        message_show = False
+#endregion
+
+#############MENU ENGINE INITIALIZE#################
+#region
+print("Initializing menus...")
+menu_current = 0
+last_button = -1
+menus = [[],[],[],[],[]]
+# if label, no w or h applicable, if centered, only y applicable
+# if centered button, no x applicable
+# type||xpos||ypos||w||h||center||text||font||highlighted
+# 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
+def buildmenus():
+    global menus
+    menus = [[],[],[],[],[]]
+    menus[0].append(["label",-1,100,-1,-1,True,tx[lan]["welcometo"],"large",False])
+    menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
+    menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
+    menus[0].append(["button",-1,450,450,80,True,tx[lan]["exitpr"],"medium",False])
+    menus[0].append(["button",920,20,80,50,False,tx[lan]["otherlang"],"medium",False])
+
+    menus[1].append(["label",-1,0,-1,-1,True,tx[lan]["dbcreation"],"large",False])
+    menus[1].append(["label",50,200,-1,-1,False,tx[lan]["dbname"],"medium",False])
+    menus[1].append(["textfield",360,200,600,50,False,"db_dbname","medium",False])
+    menus[1].append(["label",50,300,-1,-1,False,tx[lan]["urname"],"medium",False])
+    menus[1].append(["textfield",360,300,600,50,False,"db_name","medium",False])
+    menus[1].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[1].append(["button",25,500,250,75,False,tx[lan]["cancel"],"medium",False])
+    menus[1].append(["label",50,400,-1,-1,False,tx[lan]["howmanydays"],"medium",False])
+    menus[1].append(["textfield",400,400,300,50,False,"db_length","medium",False])
+
+    menus[2].append(["label",-1,0,-1,-1,True,tx[lan]["setvaluestrack"],"medium",False])
+    menus[2].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["button",-1,525,270,50,True,tx[lan]["addvalue"],"small",False])
+    menus[2].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
+    menus[2].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[2].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
+
+    menus[3].append(["label",-1,0,-1,-1,True,tx[lan]["setcheckstrack"],"medium",False])
+    menus[3].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["button",-1,525,270,50,True,tx[lan]["addcheck"],"small",False])
+    menus[3].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
+    menus[3].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[3].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
+buildmenus()
+def draw_menu(phase=0):
+    for index,item in enumerate(menus[phase]):
+        if item[0] == "label" or item[0] == "clabel":
+            color = (0, 0, 0)
+            if item[0] == "clabel":
+                color=item[9]
+            if item[7] == "large":
+                name_surface = my_font.render(item[6], False, color )
+            elif item[7] == "medium":
+                name_surface = my_font_m.render(item[6], False, color )
+            elif item[7] == "small":
+                name_surface = my_font_s.render(item[6], False, color )
+            if item[5] == True: # if centered
+                DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]))
+            else: # if not centered
+                DISPLAY.blit(name_surface, (item[1], item[2]))
+        elif item[0] == "button" or item[0] == "textfield":
+            if item[0] == "button":
+                label=item[6]
+            else:
+                label=str(globals()[item[6]])
+            if item[7] == "large":
+                name_surface = my_font.render(label, False, (0, 0, 0))
+            elif item[7] == "medium":
+                name_surface = my_font_m.render(label, False, (0, 0, 0))
+            elif item[7] == "small":
+                name_surface = my_font_s.render(label, False, (0, 0, 0))
+            if item[5] == True: # if centered
+                if item[8]:
+                    pygame.draw.rect(DISPLAY,(127,127,127),(512-(item[3]/2),item[2],item[3],item[4]))
+                DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
+                pygame.draw.rect(DISPLAY,(0,0,0),(512-(item[3]/2),item[2],item[3],item[4]),5)
+            else: # if not centered
+                if item[8]:
+                    pygame.draw.rect(DISPLAY,(127,127,127),(item[1],item[2],item[3],item[4]))
+                DISPLAY.blit(name_surface, (item[1]+item[3]/2-(name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
+                pygame.draw.rect(DISPLAY,(0,0,0),(item[1],item[2],item[3],item[4]),5)
+def menu_highlight():
+    global last_button
+    global menu_current
+    for index,button in enumerate(menus[menu_current]):
+        if button[5] == True:
+            iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
+        else:
+            iscolliding = pygame.Rect(button[1], button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
+        if iscolliding:
+            button[8] = True
+            last_button = index
+            break
+def menu_press():
+    global last_button
+    global menu_current
+    global lan
+    if last_button != -1:
+        button = menus[menu_current][last_button]
+        button[8] = False
+        last_button = -1
+        if button is menus[0][3]:
+            terminate_program()
+        elif button is menus[0][1]:
+            menu_current = 1
+        elif button is menus[0][4]:
+            if lan=="en":
+                lan="bg"
+            else:
+                lan="en"
+            buildmenus()
+        elif button is menus[1][2]:
+            display_keyboard(tx[lan]["nameurdb"], "db_dbname", digital=False, switchable=True, begin_with_upper=False,fraction=True, default_text=db_dbname,okfunc='okfuncs(0)')
+        elif button is menus[1][4]:
+            display_keyboard(tx[lan]["wasurname"],"db_name",digital=False,switchable=False,begin_with_upper=True,fraction=True,default_text=db_name,multilingual=True)
+        elif button is menus[1][5]:
+            if db_dbname == "":
+                display_message(tx[lan]["dbcantbeempty"])
+            elif db_name == "":
+                display_message(tx[lan]["mustfillname"])
+            elif db_length <= 0:
+                display_message(tx[lan]["dblengthmust"])
+            else:
+                menu_current = 2
+        elif button is menus[1][6]:
+            menu_current = 0
+        elif button is menus[1][8]:
+            display_keyboard(tx[lan]["howmanydays"],"db_length",digital=True,switchable=False,begin_with_upper=True,fraction=False,default_text=db_length)
+        elif button is menus[2][10]:
+            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(1)",multilingual=True)
+        elif button is menus[2][11]:
+            menu_current = 1
+        elif button is menus[2][12]:
+            menu_current = 3
+        elif button is menus[3][10]:
+            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(3)",multilingual=True)
+        elif button is menus[3][11]:
+            menu_current = 2
+        elif button is menus[3][12]:
+            createdb()
+        for i in range(13,22):
+            if button is menus[2][i]:
+                db_nums.pop(i-13)
+            elif button is menus[3][i]:
+                db_bools.pop(i-13)
+#endregion
+
+counter = 0
+
+print("Beginning main loop...")
 while True:
     # step
     #region
@@ -794,7 +803,6 @@ while True:
         if event.type == pygame.USEREVENT:
             counter+=1
             if counter % 4 == 0:
-                print(testcol)
                 if blinker==" ":
                     blinker="|"
                 else:
