@@ -30,8 +30,9 @@ tx = {
         "dblengthmust": "Database length@needs to be at@least 1 day!",
         "howmanydays": "How many days?",
         "whattotrack": "What to track?",
-        "default": "по подразбиране",
-        "otherlang": "БГ"
+        "default": "default",
+        "choosecolor": "Choose a color",
+        "otherlang": "БГ",
     },
     "bg": {
         "error": "Грешка",
@@ -64,10 +65,11 @@ tx = {
         "dblengthmust": "Дължината на базата@данни трябва да е@поне 1 ден!",
         "whattotrack": "Какво да следя?",
         "default": "по подразбиране",
+        "choosecolor": "Избери цвят",
         "otherlang": "EN"
     }
 }
-lan = "bg"
+lan = "en"
 
 import pygame
 import json
@@ -75,10 +77,9 @@ from sys import exit as terminate_program
 pygame.init()
 DISPLAY = pygame.display.set_mode((1024,600),0,32)
 WHITE = (255,255,255)
-blue = (0,0,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
-blabla="bebe"
 ############KEYBOARD INITIALIZE#########################
+#region
 my_font = pygame.font.Font("calibri.ttf", 72)
 my_font_m = pygame.font.Font("calibri.ttf", 48)
 my_font_s = pygame.font.Font("calibri.ttf", 36)
@@ -128,6 +129,25 @@ digit_special_keys.append([350,500,100,100,"C",False])
 digit_special_keys.append([200,500,100,100,"֍",False])
 digit_special_keys.append([550,500,100,100,".",False])
 ###################################################
+#endregion
+
+############COLOR PICKER INITIALIZE#####################
+#region
+colors_pick=[]
+colors_pick.append([(200, 0, 200), (200, 250, 90, 90)])
+colors_pick.append([(200, 0, 0), (300, 250, 90, 90)])
+colors_pick.append([(200, 200, 0), (400, 250, 90, 90)])
+colors_pick.append([(0, 200, 0), (500, 250, 90, 90)])
+colors_pick.append([(0, 200, 200), (600, 250, 90, 90)])
+colors_pick.append([(0, 0, 0), (700, 250, 90, 90)])
+colors_pick.append([(127, 127, 127), (200, 350, 90, 90)])
+colors_pick.append([(0, 0, 200), (300, 350, 90, 90)])
+colors_pick.append([(230, 170, 0), (400, 350, 90, 90)])
+colors_pick.append([(150, 120, 0), (500, 350, 90, 90)])
+colors_pick.append([(0, 120, 0), (600, 350, 90, 90)])
+colors_pick.append([(250, 50, 150), (700, 350, 90, 90)])
+#########################################################
+#endregion
 
 db_dbname=""
 db_name=""
@@ -135,12 +155,75 @@ db_nums = []
 db_bools = []
 db_editingname = ""
 db_editingdefault = 0
+db_editingcol = (0,0,0)
 db_length=365
 
 
 message_show = False
 message_to_show = "You can't leave@any field empty!"
 message_ok_hl = False
+
+colorpicker_show = False
+colorpicker_displaytext = "error"
+colorpicker_currentcol = (0,0,0)
+colorpicker_ok_hl = False
+colorpicker_tovar=""
+colorpicker_okfunc=""
+
+def display_colorpicker(tovar,displaytext,okfunc):
+    global colorpicker_show
+    global colorpicker_ok_hl
+    global colorpicker_currentcol
+    global colorpicker_tovar
+    global colorpicker_okfunc
+    global colorpicker_displaytext
+    colorpicker_displaytext = displaytext
+    colorpicker_okfunc = okfunc
+    colorpicker_tovar = tovar
+    colorpicker_currentcol = globals()[tovar]
+    colorpicker_ok_hl = False
+    colorpicker_show = True
+
+def draw_colorpicker():
+    global colors_pick
+    global colorpicker_currentcol
+    global colorpicker_displaytext
+    for color in colors_pick:
+        pygame.draw.rect(DISPLAY, color[0],color[1])
+    if colorpicker_ok_hl:
+        pygame.draw.rect(DISPLAY,(127,127,127),(406,500,212,75))
+
+
+    name_surface = my_font.render(tx[lan]["choosecolor"], False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 20))
+
+    name_surface = my_font_m.render(colorpicker_displaytext, False, colorpicker_currentcol)
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 170))
+
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,500,212,75), 5)
+    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 537-name_surface.get_size()[1]/2))
+def colorpicker_highlight():
+    global colorpicker_ok_hl
+    global colorpicker_currentcol
+    if pygame.Rect(406,500,212,75).collidepoint(pygame.mouse.get_pos()):
+        colorpicker_ok_hl = True
+    else:
+        for color in colors_pick:
+            if pygame.Rect(color[1]).collidepoint(pygame.mouse.get_pos()):
+                colorpicker_currentcol=color[0]
+def colorpicker_press():
+    global colorpicker_ok_hl
+    global colorpicker_tovar
+    global colorpicker_currentcol
+    global colorpicker_show
+    if colorpicker_ok_hl:
+        colorpicker_ok_hl = False
+        globals()[colorpicker_tovar] = colorpicker_currentcol
+        exec(colorpicker_okfunc)
+        colorpicker_currentcol=(0,0,0)
+        colorpicker_show = False
+
 
 def display_message(title):
     global message_show
@@ -149,7 +232,6 @@ def display_message(title):
     message_to_show = title
     message_ok_hl = False
     message_show = True
-
 def draw_message():
     global message_to_show
     messages = message_to_show.split("@")
@@ -172,12 +254,10 @@ def draw_message():
     pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
     name_surface = my_font_m.render("OK", False, (0, 0, 0))
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
-
 def message_highlight():
     global message_ok_hl
     if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
         message_ok_hl = True
-
 def message_press():
     global message_ok_hl
     global message_to_show
@@ -186,41 +266,36 @@ def message_press():
         message_ok_hl = False
         message_to_show = "Error"
         message_show = False
-
 def createdb():
     global menu_current
     print("creating")
     db={}
     db["dbname"] = db_dbname
     db["name"] = db_name
-    db["intnames"] = ["","","","","","","","",""]
-    db["intdefs"] = [0,0,0,0,0,0,0,0,0]
+    db["intnames"] = []
+    db["intdefs"] = []
+    db["intcols"] = []
     for index,nam in enumerate(db_nums):
-        db["intnames"][index]=nam[0]
-        db["intdefs"][index]=nam[1]
-    db["boolnames"] = ["","","","","","","","",""]
-    db["booldefs"] = [False,False,False,False,False,False,False,False,False,]
+        db["intnames"].append(nam[0])
+        db["intdefs"].append(nam[1])
+        db["intcols"].append(nam[2])
+    db["boolnames"] = []
+    db["booldefs"] = []
+    db["boolcols"] = []
     for index,nam in enumerate(db_bools):
-        db["boolnames"][index]=nam[0]
-        db["booldefs"][index]=nam[1]
+        db["boolnames"].append(nam[0])
+        db["booldefs"].append(nam[1])
+        db["boolcols"].append(nam[2])
     db["days"]=[]
-    day = {"reminder": "", "ints": [db["intdefs"][0],db["intdefs"][1],db["intdefs"][2],db["intdefs"][3],db["intdefs"][4],db["intdefs"][5],db["intdefs"][6],db["intdefs"][7],db["intdefs"][8]], "bools": [db["booldefs"][0],db["booldefs"][1],db["booldefs"][2],db["booldefs"][3],db["booldefs"][4],db["booldefs"][5],db["booldefs"][6],db["booldefs"][7],db["booldefs"][8]]}
+    day = {"reminder": "", "ints": [], "bools": []}
+    day["ints"]=db["intdefs"]
+    day["bools"]=db["booldefs"]
     for i in range(db_length):
         db["days"].append(day)
     with open(db_dbname, 'w') as outfile:
         json.dump(db, outfile)
         menu_current = 0
         display_message(tx[lan]["database"]+"@"+db_dbname+"@"+tx[lan]["created"])
-
-"""db_num1=-999
-db_num2=-999
-db_num3=-999
-db_num4=-999
-db_num5=-999
-db_num6=-999
-db_num7=-999
-db_num8=-999
-db_num9=-999"""
 
 ##################################################
 menu_current = 0
@@ -250,15 +325,15 @@ def buildmenus():
     menus[1].append(["textfield",400,400,300,50,False,"db_length","medium",False])
 
     menus[2].append(["label",-1,0,-1,-1,True,tx[lan]["setvaluestrack"],"medium",False])
-    menus[2].append(["label",-1,75,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,125,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,175,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,225,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,275,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,325,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,375,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,425,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[2].append(["label",-1,475,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[2].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
     menus[2].append(["button",-1,525,270,50,True,tx[lan]["addvalue"],"small",False])
     menus[2].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
     menus[2].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
@@ -273,15 +348,15 @@ def buildmenus():
     menus[2].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
 
     menus[3].append(["label",-1,0,-1,-1,True,tx[lan]["setcheckstrack"],"medium",False])
-    menus[3].append(["label",-1,75,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,125,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,175,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,225,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,275,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,325,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,375,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,425,-1,-1,True,tx[lan]["empty"],"small",False])
-    menus[3].append(["label",-1,475,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["clabel",-1,75,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,125,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,175,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,225,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,275,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,325,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,375,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,425,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
+    menus[3].append(["clabel",-1,475,-1,-1,True,tx[lan]["empty"],"small",False,(0,0,0)])
     menus[3].append(["button",-1,525,270,50,True,tx[lan]["addcheck"],"small",False])
     menus[3].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
     menus[3].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
@@ -298,12 +373,11 @@ def buildmenus():
 buildmenus()
 
 def draw_menu(phase=0):
-    for item in menus[phase]:
-        if item[0] == "label":
-            if "<" in item[6] and ">" in item[6]:
-                color = (127,127,127)
-            else:
-                color = (0,0,0)
+    for index,item in enumerate(menus[phase]):
+        if item[0] == "label" or item[0] == "clabel":
+            color = (0, 0, 0)
+            if item[0] == "clabel":
+                color=item[9]
             if item[7] == "large":
                 name_surface = my_font.render(item[6], False, color )
             elif item[7] == "medium":
@@ -335,8 +409,6 @@ def draw_menu(phase=0):
                     pygame.draw.rect(DISPLAY,(127,127,127),(item[1],item[2],item[3],item[4]))
                 DISPLAY.blit(name_surface, (item[1]+item[3]/2-(name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
                 pygame.draw.rect(DISPLAY,(0,0,0),(item[1],item[2],item[3],item[4]),5)
-
-
 def menu_highlight():
     global last_button
     global menu_current
@@ -349,13 +421,11 @@ def menu_highlight():
             button[8] = True
             last_button = index
             break
-
 def start_creating_db():
     global menu_current
-    global blabla
     menu_current=1
-
-def okfuncs(which):
+def okfuncs(which,misc=""):
+    global db_editingcol
     if which==0:
         global db_dbname
         db_dbname = db_dbname.replace(" ", "_")
@@ -368,7 +438,10 @@ def okfuncs(which):
             display_keyboard(tx[lan]["defvalue?"], "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=True, okfunc="okfuncs(2)")
     if which==2:
-        db_nums.append([db_editingname,db_editingdefault])
+        db_editingcol=(0,0,0)
+        display_colorpicker("db_editingcol",db_editingname,"okfuncs(2.5)")
+    if which==2.5:
+        db_nums.append([db_editingname,db_editingdefault,db_editingcol])
 
     if which==3:
         if db_editingname == "":
@@ -377,11 +450,13 @@ def okfuncs(which):
             display_keyboard(tx[lan]["checkedunchecked"], "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=False, okfunc="okfuncs(4)")
     if which==4:
+        db_editingcol=(0,0,0)
+        display_colorpicker("db_editingcol",db_editingname,"okfuncs(4.5)")
+    if which==4.5:
         if db_editingdefault == 1:
-            db_bools.append([db_editingname,True])
+            db_bools.append([db_editingname,True,db_editingcol])
         else:
-            db_bools.append([db_editingname,False])
-
+            db_bools.append([db_editingname,False,db_editingcol])
 def menu_press():
     global last_button
     global menu_current
@@ -435,8 +510,6 @@ def menu_press():
                 db_nums.pop(i-13)
             elif button is menus[3][i]:
                 db_bools.pop(i-13)
-
-
 def hide_keyboard():
     global keyboard_shown
     global keyboard_entry
@@ -454,7 +527,6 @@ def hide_keyboard():
     for key in digit_special_keys:
         key[5] = False
     keyboard_shown = False
-
 def display_keyboard(title,to_set,digital=False,switchable=True,begin_with_upper=False,fraction=False,okfunc="",default_text="",multilingual=False):
     global keyboard_shown
     global keyboard_entry
@@ -497,8 +569,6 @@ def display_keyboard(title,to_set,digital=False,switchable=True,begin_with_upper
         letters_cyr = letters_cyr.lower()
     if begin_with_upper and not digital:
         special_keys[0][5] = True
-
-
 def keyboard_press():
     global tf
     global lower
@@ -590,8 +660,6 @@ def keyboard_press():
                 elif key[4] == "." and keyboard_fraction and (not "." in tf or keyboard_switchable):
                     tf += "."
                 last_key = -1
-
-
 def keyboard_highlight():
     global last_key
     if not keyboard_digital:
@@ -616,8 +684,6 @@ def keyboard_highlight():
                 key[5] = True
                 last_key = 100+index
                 break
-
-
 def draw_keyboard():
     if not keyboard_digital:
         for key in keys:
@@ -671,20 +737,22 @@ def draw_keyboard():
     DISPLAY.blit(name_surface,  (512-(name_surface.get_size()[0] / 2),100))
     name_surface = my_font_m.render("Please enter your name", False, (0, 0, 0))
     DISPLAY.blit(name_surface,  (512-(name_surface.get_size()[0] / 2),200))"""
-
 counter = 0
-#pygame.mouse.set_pos(480, 200)
-#display_keyboard("Name","blabla",digital=True,switchable=True,begin_with_upper=False,fraction=True)
+testcol = (0,0,0)
+
 while True:
-    # step part ################################################################################################################################
+    # step
+    #region
     if not keyboard_shown and not message_show:
         if menu_current == 2:
             for i in range(9):
                 if i <= len(db_nums) - 1:
                     menus[2][i + 1][6] = db_nums[i][0] + " | "+tx[lan]["default"]+": " + str(db_nums[i][1])
+                    menus[2][i + 1][9] = db_nums[i][2]
                     menus[2][i + 13][1] = 900
                 else:
                     menus[2][i + 1][6] = tx[lan]["empty"]
+                    menus[2][i + 1][9] = (127,127,127)
                     menus[2][i + 13][1] = 1100
         elif menu_current == 3:
             for i in range(9):
@@ -693,12 +761,15 @@ while True:
                         menus[3][i + 1][6] = db_bools[i][0] + " | "+tx[lan]["default"]+": √"
                     else:
                         menus[3][i + 1][6] = db_bools[i][0] + " | "+tx[lan]["default"]+": X"
+                    menus[3][i + 1][9] = db_bools[i][2]
                     menus[3][i + 13][1] = 900
                 else:
                     menus[3][i + 1][6] = tx[lan]["empty"]
+                    menus[3][i + 1][9] = (127,127,127)
                     menus[3][i + 13][1] = 1100
-
-    # events ####################################################################################################################################
+    #endregion
+    # events
+    #region
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONUP:
             if message_show:
@@ -706,6 +777,8 @@ while True:
             else:
                 if keyboard_shown:
                     keyboard_press()
+                elif colorpicker_show:
+                    colorpicker_press()
                 else:
                     menu_press()
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -714,26 +787,30 @@ while True:
             else:
                 if keyboard_shown:
                     keyboard_highlight()
+                elif colorpicker_show:
+                    colorpicker_highlight()
                 else:
                     menu_highlight()
         if event.type == pygame.USEREVENT:
             counter+=1
             if counter % 4 == 0:
-                #print(blabla)
-                #print(type(blabla))
+                print(testcol)
                 if blinker==" ":
                     blinker="|"
                 else:
                     blinker=" "
-
-    # draw #######################################################################################################################################
+    #endregion
+    # draw
+    #region
     DISPLAY.fill(WHITE)
     if message_show:
         draw_message()
     else:
         if keyboard_shown:
             draw_keyboard()
+        elif colorpicker_show:
+            draw_colorpicker()
         else:
             draw_menu(menu_current)
-    #pygame.draw.rect(DISPLAY, blue, (pos[0]-25,pos[1], 50, 250))
     pygame.display.update()
+    #endregion
