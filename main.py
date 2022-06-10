@@ -1,5 +1,6 @@
 import pygame
 import json
+from sys import exit as terminate_program
 pygame.init()
 DISPLAY = pygame.display.set_mode((1024,600),0,32)
 WHITE = (255,255,255)
@@ -59,6 +60,55 @@ db_editingname = ""
 db_editingdefault = 0
 db_length=365
 
+message_show = True
+message_to_show = "You can't leave@any field empty!"
+message_ok_hl = False
+
+def display_message(title):
+    global message_show
+    global message_ok_hl
+    global message_to_show
+    message_to_show = title
+    message_ok_hl = False
+    message_show = True
+
+def draw_message():
+    global message_to_show
+    messages = message_to_show.split("@")
+    name_surfaces=[]
+    heights=[]
+    total_height=0
+    index=0
+    for message in messages:
+        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
+        total_height += name_surfaces[index].get_size()[1]+10
+        heights.append(total_height)
+        index+=1
+    for index, surface in enumerate(name_surfaces):
+        DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
+
+    if message_ok_hl:
+        pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
+
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
+    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
+
+def message_highlight():
+    global message_ok_hl
+    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
+        message_ok_hl = True
+
+def message_press():
+    global message_ok_hl
+    global message_to_show
+    global message_show
+    if message_ok_hl:
+        message_ok_hl = False
+        message_to_show = "Error"
+        message_show = False
+
 def createdb():
     global menu_current
     print("creating")
@@ -81,8 +131,8 @@ def createdb():
         db["days"].append(day)
     with open(db_dbname, 'w') as outfile:
         json.dump(db, outfile)
-        menus[0][3][2] = 550
         menu_current = 0
+        display_message("Database@"+db_dbname+"@created!")
 
 """db_num1=-999
 db_num2=-999
@@ -103,9 +153,9 @@ menus = [[],[],[],[],[]]
 # type||xpos||ypos||w||h||center||text||font||highlighted
 # 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
 menus[0].append(["label",-1,100,-1,-1,True,"Welcome to Life Manager","large",False])
-menus[0].append(["button",-1,275,350,100,True,"Create database","medium",False])
-menus[0].append(["button",-1,400,350,100,True,"Load database","medium",False])
-menus[0].append(["label",-1,650,-1,-1,True,"Database created!","small",False])
+menus[0].append(["button",-1,350,350,80,True,"Create database","medium",False])
+menus[0].append(["button",-1,250,350,80,True,"Load database","medium",False])
+menus[0].append(["button",-1,450,350,80,True,"Exit program","medium",False])
 
 menus[1].append(["label",-1,0,-1,-1,True,"Database creation","large",False])
 menus[1].append(["label",50,200,-1,-1,False,"Database name","medium",False])
@@ -228,13 +278,19 @@ def okfuncs(which):
         if db_dbname[-5:] != ".json":
             db_dbname+=".json"
     if which==1:
-        display_keyboard("Default value?", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
+        if db_editingname == "":
+            display_message("Item cannot be empty!")
+        else:
+            display_keyboard("Default value?", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=True, okfunc="okfuncs(2)")
     if which==2:
         db_nums.append([db_editingname,db_editingdefault])
 
     if which==3:
-        display_keyboard("1 = checked | 0 = unchecked", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
+        if db_editingname == "":
+            display_message("Item cannot be empty!")
+        else:
+            display_keyboard("1 = checked | 0 = unchecked", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=False, okfunc="okfuncs(4)")
     if which==4:
         if db_editingdefault == 1:
@@ -249,6 +305,8 @@ def menu_press():
         button = menus[menu_current][last_button]
         button[8] = False
         last_button = -1
+        if button is menus[0][3]:
+            terminate_program()
         if button is menus[0][1]:
             menu_current = 1
         elif button is menus[1][2]:
@@ -256,7 +314,14 @@ def menu_press():
         elif button is menus[1][4]:
             display_keyboard("What's your name?","db_name",digital=False,switchable=False,begin_with_upper=True,fraction=True,default_text=db_name)
         elif button is menus[1][5]:
-            menu_current = 2
+            if db_dbname == "":
+                display_message("Database name@cannot be empty!")
+            elif db_name == "":
+                display_message("You must fill out@your name!")
+            elif db_length <= 0:
+                display_message("Database length@needs to be at@least 1 day!")
+            else:
+                menu_current = 2
         elif button is menus[1][6]:
             menu_current = 0
         elif button is menus[1][8]:
@@ -475,22 +540,50 @@ def draw_keyboard():
     name_surface = my_font_m.render("Please enter your name", False, (0, 0, 0))
     DISPLAY.blit(name_surface,  (512-(name_surface.get_size()[0] / 2),200))"""
 
-
 counter = 0
 #pygame.mouse.set_pos(480, 200)
 #display_keyboard("Name","blabla",digital=True,switchable=True,begin_with_upper=False,fraction=True)
 while True:
+    # step part ################################################################################################################################
+    if not keyboard_shown and not message_show:
+        if menu_current == 2:
+            for i in range(9):
+                if i <= len(db_nums) - 1:
+                    menus[2][i + 1][6] = db_nums[i][0] + " | default: " + str(db_nums[i][1])
+                    menus[2][i + 13][1] = 900
+                else:
+                    menus[2][i + 1][6] = "<empty>"
+                    menus[2][i + 13][1] = 1100
+        elif menu_current == 3:
+            for i in range(9):
+                if i <= len(db_bools) - 1:
+                    if db_bools[i][1] == True:
+                        menus[3][i + 1][6] = db_bools[i][0] + " | default: √"
+                    else:
+                        menus[3][i + 1][6] = db_bools[i][0] + " | default: X"
+                    menus[3][i + 13][1] = 900
+                else:
+                    menus[3][i + 1][6] = "<empty>"
+                    menus[3][i + 13][1] = 1100
+
+    # events ####################################################################################################################################
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONUP:
-            if keyboard_shown:
-                keyboard_press()
+            if message_show:
+                message_press()
             else:
-                menu_press()
+                if keyboard_shown:
+                    keyboard_press()
+                else:
+                    menu_press()
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if keyboard_shown:
-                keyboard_highlight()
+            if message_show:
+                message_highlight()
             else:
-                menu_highlight()
+                if keyboard_shown:
+                    keyboard_highlight()
+                else:
+                    menu_highlight()
         if event.type == pygame.USEREVENT:
             counter+=1
             if counter % 4 == 0:
@@ -500,29 +593,15 @@ while True:
                     blinker="|"
                 else:
                     blinker=" "
+
+    # draw #######################################################################################################################################
     DISPLAY.fill(WHITE)
-    if keyboard_shown:
-        draw_keyboard()
+    if message_show:
+        draw_message()
     else:
-        draw_menu(menu_current)
-        if menu_current == 2:
-            for i in range(9):
-                if i<=len(db_nums)-1:
-                    menus[2][i+1][6] = db_nums[i][0] + " | default: "+str(db_nums[i][1])
-                    menus[2][i+13][1] = 900
-                else:
-                    menus[2][i + 1][6] = "<empty>"
-                    menus[2][i+13][1] = 1100
-        elif menu_current == 3:
-            for i in range(9):
-                if i<=len(db_bools)-1:
-                    if db_bools[i][1]==True:
-                        menus[3][i+1][6] = db_bools[i][0] + " | default: √"
-                    else:
-                        menus[3][i+1][6] = db_bools[i][0] + " | default: X"
-                    menus[3][i+13][1] = 900
-                else:
-                    menus[3][i + 1][6] = "<empty>"
-                    menus[3][i+13][1] = 1100
+        if keyboard_shown:
+            draw_keyboard()
+        else:
+            draw_menu(menu_current)
     #pygame.draw.rect(DISPLAY, blue, (pos[0]-25,pos[1], 50, 250))
     pygame.display.update()
