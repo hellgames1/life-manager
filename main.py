@@ -1,3 +1,74 @@
+tx = {
+    "en": {
+        "error": "Error",
+        "database": "Database",
+        "created": "created!",
+        "welcometo": "Welcome to Life Manager",
+        "createdb": "Create database",
+        "loaddb": "Load database",
+        "exitpr": "Exit program",
+        "dbcreation": "Database creation",
+        "dbname": "Database name",
+        "urname": "Your name",
+        "next": "next",
+        "cancel": "cancel",
+        "howmanydays": "How many days?",
+        "setvaluestrack": "Set values to track",
+        "empty": "<empty>",
+        "addvalue": "add value",
+        "previous": "previous",
+        "remove": "remove",
+        "setcheckstrack": "Set checks to track",
+        "addcheck": "add check",
+        "itemcantbeempty": "Item cannot be empty!",
+        "defvalue?": "Default value?",
+        "checkedunchecked": "1 = checked | 0 = unchecked",
+        "nameurdb": "Name your database",
+        "wasurname": "What's your name?",
+        "dbcantbeempty": "Database name@cannot be empty!",
+        "mustfillname": "You must fill out@your name!",
+        "dblengthmust": "Database length@needs to be at@least 1 day!",
+        "howmanydays": "How many days?",
+        "whattotrack": "What to track?",
+        "default": "по подразбиране",
+        "otherlang": "БГ"
+    },
+    "bg": {
+        "error": "Грешка",
+        "database": "База данни",
+        "created": "създанена!",
+        "welcometo": "Добре дошли в Life Manager",
+        "createdb": "Създай база данни",
+        "loaddb": "Зареди база данни",
+        "exitpr": "Излез от програмата",
+        "dbcreation": "Създаване на база данни",
+        "dbname": "Име на базата",
+        "urname": "Вашето име",
+        "next": "напред",
+        "cancel": "отказ",
+        "howmanydays": "Колко дни да е?",
+        "setvaluestrack": "Стойности за следене",
+        "empty": "<празно>",
+        "addvalue": "добави стойност",
+        "previous": "назад",
+        "remove": "изтрий",
+        "setcheckstrack": "Отметки за следене",
+        "addcheck": "добави отметка",
+        "itemcantbeempty": "Не може да е празно!",
+        "defvalue?": "Стойност по подразбиране?",
+        "checkedunchecked": "1 = отметнато | 0 = неотметнато",
+        "nameurdb": "Име на базата данни",
+        "wasurname": "Как се казвате?",
+        "dbcantbeempty": "Името на базата данни@не може да е празно!",
+        "mustfillname": "Трябва да си@попълните името!",
+        "dblengthmust": "Дължината на базата@данни трябва да е@поне 1 ден!",
+        "whattotrack": "Какво да следя?",
+        "default": "по подразбиране",
+        "otherlang": "EN"
+    }
+}
+lan = "bg"
+
 import pygame
 import json
 from sys import exit as terminate_program
@@ -24,15 +95,19 @@ keyboard_digital=False
 keyboard_target=""
 keyboard_switchable=True
 keyboard_fraction=False
+keyboard_multilingual=False
 keyboard_finalfunc=""
 blinker=" "
-letters = "QWERTYUIOPASDFGHJKLZXCVBNM"
+letters_lat = "QWERTYUIOPASDFGHJKLZXCVBNM?"
+letters_cyr = "ЯВЕРТЪУИОПАСДФГХЙКЛЗЧЦЖБНМЩ"
+letters = letters_lat
 for i in range(10):
     keys.append([10+i*100,200,100,100,i,False])
 for i in range(9):
     keys.append([60+i*100,300,100,100,i+10,False])
 for i in range(7):
     keys.append([160+i*100,400,100,100,i+19,False])
+keys.append([960,300,60,100,26,False,True])
 for i in range(3):
     for j in range(3):
         digit_keys.append([350+(j*100),200+(i*100),100,100,j+1+(i*3),False])
@@ -44,6 +119,8 @@ special_keys.append([300,500,500,100,"",False])
 special_keys.append([810,500,150,100,"OK",False])
 special_keys.append([40,500,150,100,"X",False])
 special_keys.append([200,500,100,100,"֍",False])
+special_keys.append([920,20,80,50,"БГ",False,True])
+
 
 digit_special_keys.append([725,300,150,100,"OK",False])
 digit_special_keys.append([125,300,150,100,"X",False])
@@ -60,7 +137,8 @@ db_editingname = ""
 db_editingdefault = 0
 db_length=365
 
-message_show = True
+
+message_show = False
 message_to_show = "You can't leave@any field empty!"
 message_ok_hl = False
 
@@ -132,7 +210,7 @@ def createdb():
     with open(db_dbname, 'w') as outfile:
         json.dump(db, outfile)
         menu_current = 0
-        display_message("Database@"+db_dbname+"@created!")
+        display_message(tx[lan]["database"]+"@"+db_dbname+"@"+tx[lan]["created"])
 
 """db_num1=-999
 db_num2=-999
@@ -152,66 +230,72 @@ menus = [[],[],[],[],[]]
 # if centered button, no x applicable
 # type||xpos||ypos||w||h||center||text||font||highlighted
 # 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
-menus[0].append(["label",-1,100,-1,-1,True,"Welcome to Life Manager","large",False])
-menus[0].append(["button",-1,350,350,80,True,"Create database","medium",False])
-menus[0].append(["button",-1,250,350,80,True,"Load database","medium",False])
-menus[0].append(["button",-1,450,350,80,True,"Exit program","medium",False])
+def buildmenus():
+    global menus
+    menus = [[],[],[],[],[]]
+    menus[0].append(["label",-1,100,-1,-1,True,tx[lan]["welcometo"],"large",False])
+    menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
+    menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
+    menus[0].append(["button",-1,450,450,80,True,tx[lan]["exitpr"],"medium",False])
+    menus[0].append(["button",920,20,80,50,False,tx[lan]["otherlang"],"medium",False])
 
-menus[1].append(["label",-1,0,-1,-1,True,"Database creation","large",False])
-menus[1].append(["label",50,200,-1,-1,False,"Database name","medium",False])
-menus[1].append(["textfield",360,200,600,50,False,"db_dbname","medium",False])
-menus[1].append(["label",50,300,-1,-1,False,"Your name","medium",False])
-menus[1].append(["textfield",360,300,600,50,False,"db_name","medium",False])
-menus[1].append(["button",750,500,250,75,False,"next","medium",False])
-menus[1].append(["button",25,500,250,75,False,"cancel","medium",False])
-menus[1].append(["label",50,400,-1,-1,False,"How many days?","medium",False])
-menus[1].append(["textfield",400,400,300,50,False,"db_length","medium",False])
+    menus[1].append(["label",-1,0,-1,-1,True,tx[lan]["dbcreation"],"large",False])
+    menus[1].append(["label",50,200,-1,-1,False,tx[lan]["dbname"],"medium",False])
+    menus[1].append(["textfield",360,200,600,50,False,"db_dbname","medium",False])
+    menus[1].append(["label",50,300,-1,-1,False,tx[lan]["urname"],"medium",False])
+    menus[1].append(["textfield",360,300,600,50,False,"db_name","medium",False])
+    menus[1].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[1].append(["button",25,500,250,75,False,tx[lan]["cancel"],"medium",False])
+    menus[1].append(["label",50,400,-1,-1,False,tx[lan]["howmanydays"],"medium",False])
+    menus[1].append(["textfield",400,400,300,50,False,"db_length","medium",False])
 
-menus[2].append(["label",-1,0,-1,-1,True,"Set values to track","medium",False])
-menus[2].append(["label",-1,75,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,125,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,175,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,225,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,275,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,325,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,375,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,425,-1,-1,True,"<empty>","small",False])
-menus[2].append(["label",-1,475,-1,-1,True,"<empty>","small",False])
-menus[2].append(["button",-1,525,200,50,True,"add value","small",False])
-menus[2].append(["button",25,500,250,75,False,"previous","medium",False])
-menus[2].append(["button",750,500,250,75,False,"next","medium",False])
-menus[2].append(["button",900,75,120,30,False,"remove","small",False])
-menus[2].append(["button",900,125,120,30,False,"remove","small",False])
-menus[2].append(["button",900,175,120,30,False,"remove","small",False])
-menus[2].append(["button",900,225,120,30,False,"remove","small",False])
-menus[2].append(["button",900,275,120,30,False,"remove","small",False])
-menus[2].append(["button",900,325,120,30,False,"remove","small",False])
-menus[2].append(["button",900,375,120,30,False,"remove","small",False])
-menus[2].append(["button",900,425,120,30,False,"remove","small",False])
-menus[2].append(["button",900,475,120,30,False,"remove","small",False])
+    menus[2].append(["label",-1,0,-1,-1,True,tx[lan]["setvaluestrack"],"medium",False])
+    menus[2].append(["label",-1,75,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,125,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,175,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,225,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,275,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,325,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,375,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,425,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["label",-1,475,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[2].append(["button",-1,525,270,50,True,tx[lan]["addvalue"],"small",False])
+    menus[2].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
+    menus[2].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[2].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
+    menus[2].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
 
-menus[3].append(["label",-1,0,-1,-1,True,"Set checks to track","medium",False])
-menus[3].append(["label",-1,75,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,125,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,175,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,225,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,275,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,325,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,375,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,425,-1,-1,True,"<empty>","small",False])
-menus[3].append(["label",-1,475,-1,-1,True,"<empty>","small",False])
-menus[3].append(["button",-1,525,200,50,True,"add check","small",False])
-menus[3].append(["button",25,500,250,75,False,"previous","medium",False])
-menus[3].append(["button",750,500,250,75,False,"next","medium",False])
-menus[3].append(["button",900,75,120,30,False,"remove","small",False])
-menus[3].append(["button",900,125,120,30,False,"remove","small",False])
-menus[3].append(["button",900,175,120,30,False,"remove","small",False])
-menus[3].append(["button",900,225,120,30,False,"remove","small",False])
-menus[3].append(["button",900,275,120,30,False,"remove","small",False])
-menus[3].append(["button",900,325,120,30,False,"remove","small",False])
-menus[3].append(["button",900,375,120,30,False,"remove","small",False])
-menus[3].append(["button",900,425,120,30,False,"remove","small",False])
-menus[3].append(["button",900,475,120,30,False,"remove","small",False])
+    menus[3].append(["label",-1,0,-1,-1,True,tx[lan]["setcheckstrack"],"medium",False])
+    menus[3].append(["label",-1,75,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,125,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,175,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,225,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,275,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,325,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,375,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,425,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["label",-1,475,-1,-1,True,tx[lan]["empty"],"small",False])
+    menus[3].append(["button",-1,525,270,50,True,tx[lan]["addcheck"],"small",False])
+    menus[3].append(["button",25,500,250,75,False,tx[lan]["previous"],"medium",False])
+    menus[3].append(["button",750,500,250,75,False,tx[lan]["next"],"medium",False])
+    menus[3].append(["button",900,75,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,125,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,175,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,225,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,275,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,325,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
+    menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
+
+buildmenus()
 
 def draw_menu(phase=0):
     for item in menus[phase]:
@@ -279,18 +363,18 @@ def okfuncs(which):
             db_dbname+=".json"
     if which==1:
         if db_editingname == "":
-            display_message("Item cannot be empty!")
+            display_message(tx[lan]["itemcantbeempty"])
         else:
-            display_keyboard("Default value?", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
+            display_keyboard(tx[lan]["defvalue?"], "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=True, okfunc="okfuncs(2)")
     if which==2:
         db_nums.append([db_editingname,db_editingdefault])
 
     if which==3:
         if db_editingname == "":
-            display_message("Item cannot be empty!")
+            display_message(tx[lan]["itemcantbeempty"])
         else:
-            display_keyboard("1 = checked | 0 = unchecked", "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
+            display_keyboard(tx[lan]["checkedunchecked"], "db_editingdefault", digital=True, switchable=False, begin_with_upper=False,
                          fraction=False, okfunc="okfuncs(4)")
     if which==4:
         if db_editingdefault == 1:
@@ -301,39 +385,47 @@ def okfuncs(which):
 def menu_press():
     global last_button
     global menu_current
+    global lan
     if last_button != -1:
         button = menus[menu_current][last_button]
         button[8] = False
         last_button = -1
         if button is menus[0][3]:
             terminate_program()
-        if button is menus[0][1]:
+        elif button is menus[0][1]:
             menu_current = 1
+        elif button is menus[0][4]:
+            print("haha")
+            if lan=="en":
+                lan="bg"
+            else:
+                lan="en"
+            buildmenus()
         elif button is menus[1][2]:
-            display_keyboard("Name your database", "db_dbname", digital=False, switchable=True, begin_with_upper=False,fraction=True, default_text=db_dbname,okfunc='okfuncs(0)')
+            display_keyboard(tx[lan]["nameurdb"], "db_dbname", digital=False, switchable=True, begin_with_upper=False,fraction=True, default_text=db_dbname,okfunc='okfuncs(0)')
         elif button is menus[1][4]:
-            display_keyboard("What's your name?","db_name",digital=False,switchable=False,begin_with_upper=True,fraction=True,default_text=db_name)
+            display_keyboard(tx[lan]["wasurname"],"db_name",digital=False,switchable=False,begin_with_upper=True,fraction=True,default_text=db_name,multilingual=True)
         elif button is menus[1][5]:
             if db_dbname == "":
-                display_message("Database name@cannot be empty!")
+                display_message(tx[lan]["dbcantbeempty"])
             elif db_name == "":
-                display_message("You must fill out@your name!")
+                display_message(tx[lan]["mustfillname"])
             elif db_length <= 0:
-                display_message("Database length@needs to be at@least 1 day!")
+                display_message(tx[lan]["dblengthmust"])
             else:
                 menu_current = 2
         elif button is menus[1][6]:
             menu_current = 0
         elif button is menus[1][8]:
-            display_keyboard("How many days?","db_length",digital=True,switchable=False,begin_with_upper=True,fraction=False,default_text=db_length)
+            display_keyboard(tx[lan]["howmanydays"],"db_length",digital=True,switchable=False,begin_with_upper=True,fraction=False,default_text=db_length)
         elif button is menus[2][10]:
-            display_keyboard("What to track?", "db_editingname", digital=False, switchable=False, begin_with_upper=False,fraction=False,okfunc="okfuncs(1)")
+            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(1)",multilingual=True)
         elif button is menus[2][11]:
             menu_current = 1
         elif button is menus[2][12]:
             menu_current = 3
         elif button is menus[3][10]:
-            display_keyboard("What to track?", "db_editingname", digital=False, switchable=False, begin_with_upper=False,fraction=False,okfunc="okfuncs(3)")
+            display_keyboard(tx[lan]["whattotrack"], "db_editingname", digital=False, switchable=True, begin_with_upper=False,fraction=False,okfunc="okfuncs(3)",multilingual=True)
         elif button is menus[3][11]:
             menu_current = 2
         elif button is menus[3][12]:
@@ -363,33 +455,46 @@ def hide_keyboard():
         key[5] = False
     keyboard_shown = False
 
-def display_keyboard(title,to_set,digital=False,switchable=True,begin_with_upper=False,fraction=False,okfunc="",default_text=""):
+def display_keyboard(title,to_set,digital=False,switchable=True,begin_with_upper=False,fraction=False,okfunc="",default_text="",multilingual=False):
     global keyboard_shown
     global keyboard_entry
     global lower
     global keyboard_digital
     global keyboard_target
     global letters
+    global letters_lat
+    global letters_cyr
     global keyboard_switchable
     global keyboard_fraction
     global keyboard_finalfunc
+    global keyboard_multilingual
     global tf
     if default_text != "":
         tf=str(default_text)
+    special_keys[6][4] = "БГ"
+    letters = letters_lat
     keyboard_finalfunc = okfunc
     keyboard_switchable = switchable
     keyboard_target = to_set
     keyboard_entry = title
     keyboard_digital = digital
     keyboard_fraction = fraction
+    if lan=="bg":
+        keyboard_multilingual = multilingual
+    else:
+        keyboard_multilingual = False
     if switchable:
         keyboard_fraction = True
     lower = not begin_with_upper
     keyboard_shown = True
     if begin_with_upper:
         letters = letters.upper()
+        letters_lat = letters_lat.upper()
+        letters_cyr = letters_cyr.upper()
     else:
         letters = letters.lower()
+        letters_lat = letters_lat.lower()
+        letters_cyr = letters_cyr.lower()
     if begin_with_upper and not digital:
         special_keys[0][5] = True
 
@@ -398,6 +503,8 @@ def keyboard_press():
     global tf
     global lower
     global letters
+    global letters_lat
+    global letters_cyr
     global last_key
     global keyboard_digital
     global keyboard_switchable
@@ -408,11 +515,14 @@ def keyboard_press():
             if last_key<100:
                 key = keys[last_key]
                 key[5] = False
-                tf += letters[key[4]]
-                if not lower:
-                    lower = True
-                    special_keys[0][5] = False
-                    letters = letters.lower()
+                if key[4] != 26 or letters == letters_cyr:
+                    tf += letters[key[4]]
+                    if not lower:
+                        lower = True
+                        special_keys[0][5] = False
+                        letters = letters.lower()
+                        letters_lat = letters_lat.lower()
+                        letters_cyr = letters_cyr.lower()
                 last_key = -1
             else:
                 key = special_keys[last_key-100]
@@ -422,10 +532,14 @@ def keyboard_press():
                 elif key[4] == "shift":
                     if lower:
                         letters = letters.upper()
+                        letters_lat = letters_lat.upper()
+                        letters_cyr = letters_cyr.upper()
                         lower = False
                         key[5] = True
                     else:
                         letters = letters.lower()
+                        letters_lat = letters_lat.lower()
+                        letters_cyr = letters_cyr.lower()
                         lower = True
                 elif key[4] == "":
                     tf += " "
@@ -437,6 +551,12 @@ def keyboard_press():
                     hide_keyboard()
                 elif key[4] == "֍" and keyboard_switchable:
                     keyboard_digital = True
+                elif key[4] == "EN" and keyboard_multilingual:
+                    letters = letters_lat
+                    special_keys[6][4]="БГ"
+                elif key[4] == "БГ" and keyboard_multilingual:
+                    letters = letters_cyr
+                    special_keys[6][4]="EN"
                 last_key = -1
     else:
         if last_key != -1:
@@ -501,17 +621,29 @@ def keyboard_highlight():
 def draw_keyboard():
     if not keyboard_digital:
         for key in keys:
-            if key[5]:
-                pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
-            pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
-            DISPLAY.blit(my_font.render(letters[key[4]], False, (0,0,0)),(key[0]+20,key[1]+20))
-        for key in special_keys:
-            if key[4] == "֍" and not keyboard_switchable:
+            if key[4]==26 and letters == letters_lat:
                 continue
             if key[5]:
                 pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
             pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
-            DISPLAY.blit(my_font.render(key[4], False, (0,0,0)),(key[0]+20,key[1]+20))
+            if len(key)==7:
+                tempsurface = my_font_s.render(letters[key[4]], False, (0,0,0))
+                DISPLAY.blit(tempsurface,(key[0]+10,key[1]+50-tempsurface.get_size()[1]/2))
+            else:
+                DISPLAY.blit(my_font.render(letters[key[4]], False, (0,0,0)),(key[0]+20,key[1]+20))
+        for key in special_keys:
+            if key[4] == "֍" and not keyboard_switchable:
+                continue
+            if not (not keyboard_multilingual and len(key)==7):
+                if key[5]:
+                    pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
+                pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
+            if len(key)==7:
+                if keyboard_multilingual:
+                    tempsurface = my_font_s.render(key[4], False, (0,0,0))
+                    DISPLAY.blit(tempsurface,(key[0]+10,key[1]+(key[3]/2)-tempsurface.get_size()[1]/2))
+            else:
+                DISPLAY.blit(my_font.render(key[4], False, (0,0,0)),(key[0]+20,key[1]+20))
     else:
         for key in digit_keys:
             if key[5]:
@@ -549,21 +681,21 @@ while True:
         if menu_current == 2:
             for i in range(9):
                 if i <= len(db_nums) - 1:
-                    menus[2][i + 1][6] = db_nums[i][0] + " | default: " + str(db_nums[i][1])
+                    menus[2][i + 1][6] = db_nums[i][0] + " | "+tx[lan]["default"]+": " + str(db_nums[i][1])
                     menus[2][i + 13][1] = 900
                 else:
-                    menus[2][i + 1][6] = "<empty>"
+                    menus[2][i + 1][6] = tx[lan]["empty"]
                     menus[2][i + 13][1] = 1100
         elif menu_current == 3:
             for i in range(9):
                 if i <= len(db_bools) - 1:
                     if db_bools[i][1] == True:
-                        menus[3][i + 1][6] = db_bools[i][0] + " | default: √"
+                        menus[3][i + 1][6] = db_bools[i][0] + " | "+tx[lan]["default"]+": √"
                     else:
-                        menus[3][i + 1][6] = db_bools[i][0] + " | default: X"
+                        menus[3][i + 1][6] = db_bools[i][0] + " | "+tx[lan]["default"]+": X"
                     menus[3][i + 13][1] = 900
                 else:
-                    menus[3][i + 1][6] = "<empty>"
+                    menus[3][i + 1][6] = tx[lan]["empty"]
                     menus[3][i + 13][1] = 1100
 
     # events ####################################################################################################################################
