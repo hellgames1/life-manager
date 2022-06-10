@@ -32,6 +32,7 @@ tx = {
         "whattotrack": "What to track?",
         "default": "default",
         "choosecolor": "Choose a color",
+        "months": ["January","February","March","April","May","June","July","August","September","October","November","December"],
         "otherlang": "БГ",
     },
     "bg": {
@@ -66,6 +67,7 @@ tx = {
         "whattotrack": "Какво да следя?",
         "default": "по подразбиране",
         "choosecolor": "Избери цвят",
+        "months": ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"],
         "otherlang": "EN"
     }
 }
@@ -75,11 +77,14 @@ lan = "en"
 print("Importing libraries...")
 import pygame
 import json
+import datetime
+import os
 from sys import exit as terminate_program
 pygame.init()
 DISPLAY = pygame.display.set_mode((1024,600),0,32)
 WHITE = (255,255,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
+db={}
 #endregion
 ############KEYBOARD INITIALIZE#########################
 #region
@@ -87,6 +92,9 @@ print("Initializing keyboard...")
 my_font = pygame.font.Font("calibri.ttf", 72)
 my_font_m = pygame.font.Font("calibri.ttf", 48)
 my_font_s = pygame.font.Font("calibri.ttf", 36)
+
+############CALENDAR INTTIALIZE#######################
+
 lower = False
 keys = []
 special_keys = []
@@ -486,10 +494,22 @@ db_editingname = ""
 db_editingdefault = 0
 db_editingcol = (0,0,0)
 db_length=365
+def loaddb(filename):
+    global db
+    global menu_current
+    global calendar_shown
+    global calendar
+    f = open(filename, "r")
+    db = json.loads(f.read())
+    calendar=[]
+    for i in range(len(db["days"])):
+        calendar.append([db["days"][i]["wkd"]*80, db["days"][i]["wksince"]*80,80,80,db["days"][i]["dt"],db["days"][i]["mn"]])
+    menu_current = 5
+    calendar_shown = True
 def createdb():
     global menu_current
+    global db
     print("creating")
-    db={}
     db["dbname"] = db_dbname
     db["name"] = db_name
     db["intnames"] = []
@@ -507,15 +527,65 @@ def createdb():
         db["booldefs"].append(nam[1])
         db["boolcols"].append(nam[2])
     db["days"]=[]
-    day = {"reminder": "", "ints": [], "bools": []}
+    day = {"wkd": -1, "dt": -1, "mn": -1, "yr": -1, "wksince": -1, "reminders": [], "ints": [], "bools": []}
     day["ints"]=db["intdefs"]
     day["bools"]=db["booldefs"]
+    wkday = datetime.datetime.today().weekday()
+    month = datetime.datetime.today().month
+    date = datetime.datetime.today().day
+    year = datetime.datetime.today().year
+    wksince=0
     for i in range(db_length):
-        db["days"].append(day)
+        cday = day.copy()
+        cday["wkd"]=wkday
+        cday["dt"]=date
+        cday["mn"]=month
+        cday["yr"]=year
+        cday["wksince"]=wksince
+        db["days"].append(cday)
+        wkday+=1
+        if wkday>=7:
+            wkday=0
+            wksince+=1
+        date+=1
+        if month==1 or month==3 or month==5 or month==7 or month==8 or month==10 or month==12:
+            if date==32:
+                date=1
+                month+=1
+        elif month == 4 or month == 6 or month == 9 or month == 11:
+            if date == 31:
+                date = 1
+                month += 1
+        elif month == 2:
+            if year % 4 == 0 and date == 30:
+                date = 1
+                month += 1
+            elif year % 4 != 0 and date == 29:
+                date = 1
+                month += 1
+        if month == 13:
+            month = 1
+            year+=1
+
     with open(db_dbname, 'w') as outfile:
         json.dump(db, outfile)
         menu_current = 0
         display_message(tx[lan]["database"]+"@"+db_dbname+"@"+tx[lan]["created"])
+def dblist_show():
+    global menus
+    global menu_current
+    menus[4]=[]
+    menus[4].append(["label", -1, 0, -1, -1, True, "Load database", "large", False])
+    menus[4].append(["button",750,500,250,75,False,"refresh","medium",False])
+    menus[4].append(["button",25,500,250,75,False,tx[lan]["cancel"],"medium",False])
+    index=0
+    for obj in os.listdir():
+        if obj[-5:] == ".json":
+            menus[4].append(["button", -1, 100+index*60, 500, 50, True, obj, "small", False])
+            index+=1
+            if index==6:
+                break
+    menu_current=4
 #endregion
 
 ###########MESSAGE ENGINE INITIALIZE####################
@@ -573,14 +643,14 @@ def message_press():
 print("Initializing menus...")
 menu_current = 0
 last_button = -1
-menus = [[],[],[],[],[]]
+menus = [[],[],[],[],[],[]]
 # if label, no w or h applicable, if centered, only y applicable
 # if centered button, no x applicable
 # type||xpos||ypos||w||h||center||text||font||highlighted
 # 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
 def buildmenus():
     global menus
-    menus = [[],[],[],[],[]]
+    menus = [[],[],[],[],[],[]]
     menus[0].append(["label",-1,100,-1,-1,True,tx[lan]["welcometo"],"large",False])
     menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
     menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
@@ -642,6 +712,9 @@ def buildmenus():
     menus[3].append(["button",900,375,120,30,False,tx[lan]["remove"],"small",False])
     menus[3].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
     menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
+
+    menus[5].append(["button",200,0,200,80,False,"↑↑↑","medium",False])
+    menus[5].append(["button",200,520,200,80,False,"↓↓↓","medium",False])
 buildmenus()
 def draw_menu(phase=0):
     for index,item in enumerate(menus[phase]):
@@ -683,6 +756,8 @@ def draw_menu(phase=0):
 def menu_highlight():
     global last_button
     global menu_current
+    global calendar_shown
+    global calendar_scroll
     for index,button in enumerate(menus[menu_current]):
         if button[5] == True:
             iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
@@ -691,11 +766,17 @@ def menu_highlight():
         if iscolliding:
             button[8] = True
             last_button = index
+            if menu_current==5 and calendar_shown:
+                if index==0:
+                    calendar_scroll=20
+                elif index==1:
+                    calendar_scroll=-20
             break
 def menu_press():
     global last_button
     global menu_current
     global lan
+    global calendar_scroll
     if last_button != -1:
         button = menus[menu_current][last_button]
         button[8] = False
@@ -704,6 +785,8 @@ def menu_press():
             terminate_program()
         elif button is menus[0][1]:
             menu_current = 1
+        elif button is menus[0][2]:
+            dblist_show()
         elif button is menus[0][4]:
             if lan=="en":
                 lan="bg"
@@ -739,6 +822,28 @@ def menu_press():
             menu_current = 2
         elif button is menus[3][12]:
             createdb()
+        elif button is menus[4][1]:
+            dblist_show()
+        elif button is menus[4][2]:
+            menu_current = 0
+        elif button is menus[5][0] or button is menus[5][1]:
+            calendar_scroll=0
+        else:
+            try:
+                if button is menus[4][3]:
+                    loaddb(menus[4][3][6])
+                elif button is menus[4][4]:
+                    loaddb(menus[4][4][6])
+                elif button is menus[4][5]:
+                    loaddb(menus[4][5][6])
+                elif button is menus[4][6]:
+                    loaddb(menus[4][6][6])
+                elif button is menus[4][7]:
+                    loaddb(menus[4][7][6])
+                elif button is menus[4][8]:
+                    loaddb(menus[4][8][6])
+            except IndexError:
+                print("index error baby")
         for i in range(13,22):
             if button is menus[2][i]:
                 db_nums.pop(i-13)
@@ -746,8 +851,30 @@ def menu_press():
                 db_bools.pop(i-13)
 #endregion
 
+###############CALENDAR
+calendar_shown = False
+calendar_scroll = 0
+calendar_scrolled = 0
+calendar_scrolledmonth = 0
+calendar_redbit=(0,0)
+calendar=[]
+def draw_calendar():
+    global calendar_scrolledmonth
+    global calendar_redbit
+    for key in calendar:
+        ypos = calendar_scrolled + key[1]
+        if datetime.datetime.today().day==key[4] and datetime.datetime.today().month==key[5]:
+            calendar_redbit=(key[0], ypos)
+        if 260 >= ypos >= 180:
+            calendar_scrolledmonth = key[5]
+        if 520 >= ypos >=0:
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (key[0], ypos , key[2], key[3]), 5)
+            DISPLAY.blit(my_font_s.render(str(key[4]), False, (0, 0, 0)), (key[0] + 10, ypos + 10))
+    pygame.draw.rect(DISPLAY, (200, 0, 0), (calendar_redbit[0],calendar_redbit[1], 80,80), 5)
+    pygame.draw.rect(DISPLAY, (255, 255, 255), (0,0,563,80))
+    pygame.draw.rect(DISPLAY, (255, 255, 255), (0,520,563,80))
+    DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], False, (0, 0, 0)), (420, 20))
 counter = 0
-
 print("Beginning main loop...")
 while True:
     # step
@@ -801,6 +928,7 @@ while True:
                 else:
                     menu_highlight()
         if event.type == pygame.USEREVENT:
+            calendar_scrolled += calendar_scroll
             counter+=1
             if counter % 4 == 0:
                 if blinker==" ":
@@ -819,6 +947,8 @@ while True:
         elif colorpicker_show:
             draw_colorpicker()
         else:
+            if menu_current==5 and calendar_shown:
+                draw_calendar()
             draw_menu(menu_current)
     pygame.display.update()
     #endregion
