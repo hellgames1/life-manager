@@ -34,6 +34,10 @@ tx = {
         "choosecolor": "Choose a color",
         "months": ["January","February","March","April","May","June","July","August","September","October","November","December"],
         "weekdays": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "show": "Show",
+        "hide": "Hide",
+        "reminders": "Reminders:",
+        "refresh": "refresh",
         "otherlang": "БГ",
     },
     "bg": {
@@ -70,6 +74,10 @@ tx = {
         "choosecolor": "Избери цвят",
         "months": ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"],
         "weekdays": ["понеделник","вторник","сряда","четвъртък","петък","събота","неделя"],
+        "show": "Покажи",
+        "hide": "Скрий",
+        "reminders": "Бележки:",
+        "refresh": "опресни",
         "otherlang": "EN"
     }
 }
@@ -99,6 +107,7 @@ print("Initializing keyboard...")
 my_font = pygame.font.Font("calibri.ttf", 72)
 my_font_m = pygame.font.Font("calibri.ttf", 48)
 my_font_s = pygame.font.Font("calibri.ttf", 36)
+my_font_xs = pygame.font.Font("calibri.ttf", 24)
 
 ############CALENDAR INTTIALIZE#######################
 
@@ -597,8 +606,8 @@ def dblist_show():
     global menus
     global menu_current
     menus[4]=[]
-    menus[4].append(["label", -1, 0, -1, -1, True, "Load database", "large", False])
-    menus[4].append(["button",750,500,250,75,False,"refresh","medium",False])
+    menus[4].append(["label", -1, 0, -1, -1, True, tx[lan]["loaddb"], "large", False])
+    menus[4].append(["button",750,500,250,75,False,tx[lan]["refresh"],"medium",False])
     menus[4].append(["button",25,500,250,75,False,tx[lan]["cancel"],"medium",False])
     index=0
     for obj in os.listdir():
@@ -736,8 +745,8 @@ def buildmenus():
     menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
 
     menus[5].append(["button", 0, 200, 80, 200, False, "OK", "medium", False])
-    menus[5].append(["button_context", 0, 400, 80, 100, False, "Hide", "small", False,"widgets_visualize",True])
-    menus[5].append(["button_context", 0, 400, 80, 100, False, "Show", "small", False,"widgets_visualize",False])
+    menus[5].append(["button_context", 0, 400, 80, 100, False, tx[lan]["hide"], "tiny", False,"widgets_visualize",True])
+    menus[5].append(["button_context", 0, 400, 80, 100, False, tx[lan]["show"], "tiny", False,"widgets_visualize",False])
 
     menus[6].append(["button_context",200,0,200,80,False,"↑↑↑","medium",False,"calendar_shown",True])
     menus[6].append(["button_context",200,520,200,80,False,"↓↓↓","medium",False,"calendar_shown",True])
@@ -756,6 +765,8 @@ def draw_menu(phase=0):
                 name_surface = my_font_m.render(item[6], False, color )
             elif item[7] == "small":
                 name_surface = my_font_s.render(item[6], False, color )
+            elif item[7] == "tiny":
+                name_surface = my_font_xs.render(item[6], False, color )
             if item[5] == True: # if centered
                 DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]))
             else: # if not centered
@@ -771,6 +782,8 @@ def draw_menu(phase=0):
                 name_surface = my_font_m.render(label, False, (0, 0, 0))
             elif item[7] == "small":
                 name_surface = my_font_s.render(label, False, (0, 0, 0))
+            elif item[7] == "tiny":
+                name_surface = my_font_xs.render(label, False, (0, 0, 0))
             draw=True
             if item[0] == "button_context" and globals()[item[9]] == (not item[10]):
                 draw=False
@@ -933,7 +946,7 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
         name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
         widget_datesize = name_surface.get_size()[0]
     elif text == "__rem":
-        name_surface = my_font_s.render("Reminders:", False, (0, 0, 0))
+        name_surface = my_font_xs.render(tx[lan]["reminders"], False, (0, 0, 0))
 
 
     if text=="__clock":
@@ -946,7 +959,7 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
         elif widget_alignments=="right":
             DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
     elif text=="__rem":
-        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y))
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+5))
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
         name_surfacea = my_font_s.render(text, False, color)
@@ -1057,7 +1070,7 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
             DISPLAY.blit(my_font_s.render("↔", False, (230, 230, 230)), (placing_x -20, placing_y +42))
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y+40, 40, 40), 5)
     elif text == "__rem":
-        name_surface = my_font_s.render("Reminders:", False, (0, 0, 0))
+        name_surface = my_font_xs.render(tx[lan]["reminders"], False, (0, 0, 0))
     else:
         if widgets_visualize:
             DISPLAY.blit(my_font_s.render("S", False, (230, 230, 230)), (placing_x -8, placing_y -36))
@@ -1081,7 +1094,7 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
         elif widget_alignments=="right":
             DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
     elif text=="__rem":
-        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y))
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+5))
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
         name_surfacea = my_font_s.render(text, False, color)
