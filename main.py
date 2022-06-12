@@ -490,6 +490,7 @@ def colorpicker_press():
 #########################################################
 #endregion
 
+currentday=0
 ###########DB EDITOR INITALIZE##########################
 #region
 print("Initializing database editor...")
@@ -506,12 +507,23 @@ def loaddb(filename):
     global menu_current
     global calendar_shown
     global calendar
+    global currentday
+    global calendar_scrolled
+    currentday=0
     f = open(filename, "r")
     db = json.loads(f.read())
     calendar=[]
     for i in range(len(db["days"])):
         calendar.append([db["days"][i]["wkd"]*80, db["days"][i]["wksince"]*80,80,80,db["days"][i]["dt"],db["days"][i]["mn"],db["days"][i]["yr"]])
+        if db["days"][i]["dt"] == datetime.datetime.today().day:
+            if db["days"][i]["mn"] == datetime.datetime.today().month:
+                if db["days"][i]["yr"] == datetime.datetime.today().year:
+                    currentday = len(calendar)-1
+                    calendar_scrolled= - db["days"][i]["wksince"]*80+260
+
     #calendar_shown = True
+    load_widgets()
+    menu_current=6
 def createdb():
     global menu_current
     global db
@@ -532,8 +544,10 @@ def createdb():
         db["boolnames"].append(nam[0])
         db["booldefs"].append(nam[1])
         db["boolcols"].append(nam[2])
-    db["datealignment"]="left"
-    db["positions"]=[]
+    db["datealignment"]=widget_alignments
+    db["positionstyles"]=[]
+    for item in widgets:
+        db["positionstyles"].append([item[2],item[3],item[1]])
     db["days"]=[]
     day = {"wkd": -1, "dt": -1, "mn": -1, "yr": -1, "wksince": -1, "reminders": [], "ints": [], "bools": []}
     day["ints"]=db["intdefs"]
@@ -848,7 +862,7 @@ def menu_press():
             generate_widgets()
             menu_current = 5
         elif button is menus[5][0]:
-            print("OK BABY")
+            createdb()
         elif button is menus[5][1]:
             widgets_visualize=False
         elif button is menus[5][2]:
@@ -884,17 +898,103 @@ def menu_press():
                 db_bools.pop(i-13)
 #endregion
 #############EDITOR############################
-widgets=[["__clock",0,0,0],["__date",0,800,0],["calories",0,256,200],["jerkoff",1,356,200],["kilometers ran",2,256,300],["kilometers hana",3,456,300]]
+widgets=[]
 widget_selected = -1
 widget_selection_offset=[]
 widget_alignments="left"
 widget_datesize=0
 widgets_visualize=True
+def load_widgets():
+    global db
+    global widgets
+    global widget_alignments
+    global currentday
+    widget_alignments = db["datealignment"]
+    widgets=[["__clock",0,db["positionstyles"][0][0],db["positionstyles"][0][1],(0,0,0),-1]]
+    widgets.append(["__date",0,db["positionstyles"][1][0],db["positionstyles"][1][1],(0,0,0),-1])
+    widgets.append(["__rem",0,db["positionstyles"][2][0],db["positionstyles"][2][1],(0,0,0),-1])
+    for index,item in enumerate(db["days"][currentday]["ints"]):
+        widgets.append([db["intnames"][index],
+                        db["positionstyles"][index+3][2],db["positionstyles"][index+3][0],
+                        db["positionstyles"][index+3][1],db["intcols"][index],str(item)])
+    boolstart=len(widgets)
+    for index,item in enumerate(db["days"][currentday]["bools"]):
+        widgets.append([db["boolnames"][index],
+                        db["positionstyles"][index+boolstart][2],db["positionstyles"][index+boolstart][0],
+                        db["positionstyles"][index+boolstart][1],db["boolcols"][index],item])
+
+def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
+    global widget_selected
+    global widget_datesize
+    value=str(value)
+    if text=="__clock":
+        name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+    elif text=="__date":
+        name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
+        widget_datesize = name_surface.get_size()[0]
+    elif text == "__rem":
+        name_surface = my_font_s.render("Reminders:", False, (0, 0, 0))
+
+
+    if text=="__clock":
+        DISPLAY.blit(name_surface, (placing_x, placing_y))
+    elif text=="__date":
+        if widget_alignments=="left":
+            DISPLAY.blit(name_surface, (placing_x, placing_y))
+        elif widget_alignments=="center":
+            DISPLAY.blit(name_surface, (placing_x-widget_datesize/2, placing_y))
+        elif widget_alignments=="right":
+            DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
+    elif text=="__rem":
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y))
+        pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
+    else:
+        name_surfacea = my_font_s.render(text, False, color)
+        DISPLAY.blit(name_surfacea, (placing_x - name_surfacea.get_size()[0] / 2, placing_y))
+        name_surface = my_font_s.render(value, False, (0, 0, 0))
+        #if name_surface.get_size()[0] < 34:
+        #    tempsize = 34
+        #else:
+        tempsize = name_surface.get_size()[0]
+        if style == 4:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
+        elif style == 5:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
+        elif style == 6:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
+        elif style!=1:
+            DISPLAY.blit(name_surface, (placing_x - name_surface.get_size()[0] / 2, placing_y + 45))
+        else:
+            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 8 + tempsize/2+20 - name_surface.get_size()[0]/2, placing_y))
+
+        if style==0:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - tempsize/2 - 20, placing_y+40, tempsize+40, 40),5)
+        elif style==1:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, tempsize+40, 40),5)
+        elif style==2:
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 60, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - tempsize / 2 - 50, placing_y + 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + tempsize / 2 + 30, placing_y + 40))
+        elif style==3:
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 70, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - tempsize / 2 - 60, placing_y + 44))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + tempsize / 2 + 28, placing_y + 44))
+        elif style==4:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - 20, placing_y+40, 40, 40),5)
+        elif style==5:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, 40, 40),5)
+        elif style==6:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - name_surfacea.get_size()[0] / 2 - 48 , placing_y-5, 40, 40),5)
 def generate_widgets():
     global widgets
     x=300
     y=80
-    widgets = [["__clock", 0, 60, 20, (0,0,0),-1], ["__date", 0, 800, 20, (0,0,0),-1]]
+    widgets = [["__clock", 0, 60, 20, (0,0,0),-1], ["__date", 0, 800, 20, (0,0,0),-1], ["__rem", 0, 300, 20, (0,0,0),-1]]
     for index,item in enumerate(db_nums):
         widgets.append([item[0],0,x,y,item[2],item[1]])
         if y<480:
@@ -956,6 +1056,8 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
         if widgets_visualize:
             DISPLAY.blit(my_font_s.render("↔", False, (230, 230, 230)), (placing_x -20, placing_y +42))
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y+40, 40, 40), 5)
+    elif text == "__rem":
+        name_surface = my_font_s.render("Reminders:", False, (0, 0, 0))
     else:
         if widgets_visualize:
             DISPLAY.blit(my_font_s.render("S", False, (230, 230, 230)), (placing_x -8, placing_y -36))
@@ -978,6 +1080,9 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
             DISPLAY.blit(name_surface, (placing_x-widget_datesize/2, placing_y))
         elif widget_alignments=="right":
             DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
+    elif text=="__rem":
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y))
+        pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
         name_surfacea = my_font_s.render(text, False, color)
         DISPLAY.blit(name_surfacea, (placing_x - name_surfacea.get_size()[0] / 2, placing_y))
@@ -1034,7 +1139,7 @@ def draw_calendar():
     global current_date
     global current_month
     global current_year
-    for key in calendar:
+    for index,key in enumerate(calendar):
         ypos = calendar_scrolled + key[1]
         if datetime.datetime.today().day==key[4] and datetime.datetime.today().month==key[5]:
             calendar_redbit=(key[0], ypos)
@@ -1044,6 +1149,8 @@ def draw_calendar():
         if 260 >= ypos >= 180:
             calendar_scrolledmonth = key[5]
         if 520 >= ypos >=0:
+            if index==currentday:
+                pygame.draw.rect(DISPLAY, (199, 199, 199), (key[0], ypos , key[2], key[3]))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (key[0], ypos , key[2], key[3]), 5)
             DISPLAY.blit(my_font_s.render(str(key[4]), False, (0, 0, 0)), (key[0] + 10, ypos + 10))
     pygame.draw.rect(DISPLAY, (200, 0, 0), (calendar_redbit[0],calendar_redbit[1], 80,80), 5)
@@ -1081,8 +1188,8 @@ while True:
                     menus[3][i + 1][9] = (127,127,127)
                     menus[3][i + 13][1] = 1100
         elif menu_current == 5 and widget_selected !=- 1:
-            widgets[widget_selected][2]=round((pygame.mouse.get_pos()[0]-widget_selection_offset[0])/20)*20
-            widgets[widget_selected][3]=round((pygame.mouse.get_pos()[1]-widget_selection_offset[1])/20)*20
+            widgets[widget_selected][2]=round((pygame.mouse.get_pos()[0]-widget_selection_offset[0])/10)*10
+            widgets[widget_selected][3]=round((pygame.mouse.get_pos()[1]-widget_selection_offset[1])/10)*10
     #endregion
     # events
     #region
@@ -1140,10 +1247,9 @@ while True:
                 if calendar_shown:
                     draw_calendar()
                 else:
-                    name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
-                    DISPLAY.blit(name_surface, (0,0))
-                name_surface = my_font_m.render(str(current_date)+" "+tx[lan]["months"][current_month-1]+" "+str(current_year), False, (0, 0, 0))
-                DISPLAY.blit(name_surface, (1024 - (name_surface.get_size()[0]),0))
+                    for index, widget in enumerate(widgets):
+                        draw_awidget(widgets[index][2], widgets[index][3], widgets[index][0], index, widgets[index][1],
+                                     widgets[index][4], widgets[index][5])
             draw_menu(menu_current)
             #print(db_nums)
     pygame.display.update()
