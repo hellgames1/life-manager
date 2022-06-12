@@ -33,6 +33,7 @@ tx = {
         "default": "default",
         "choosecolor": "Choose a color",
         "months": ["January","February","March","April","May","June","July","August","September","October","November","December"],
+        "weekdays": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
         "otherlang": "БГ",
     },
     "bg": {
@@ -68,6 +69,7 @@ tx = {
         "default": "по подразбиране",
         "choosecolor": "Избери цвят",
         "months": ["Януари","Февруари","Март","Април","Май","Юни","Юли","Август","Септември","Октомври","Ноември","Декември"],
+        "weekdays": ["понеделник","вторник","сряда","четвъртък","петък","събота","неделя"],
         "otherlang": "EN"
     }
 }
@@ -78,6 +80,7 @@ print("Importing libraries...")
 import pygame
 import json
 import datetime
+import random
 import os
 from sys import exit as terminate_program
 pygame.init()
@@ -85,6 +88,10 @@ DISPLAY = pygame.display.set_mode((1024,600),0,32)
 WHITE = (255,255,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
 db={}
+current_wkday = datetime.datetime.today().weekday()
+current_month = datetime.datetime.today().month
+current_date = datetime.datetime.today().day
+current_year = datetime.datetime.today().year
 #endregion
 ############KEYBOARD INITIALIZE#########################
 #region
@@ -503,9 +510,8 @@ def loaddb(filename):
     db = json.loads(f.read())
     calendar=[]
     for i in range(len(db["days"])):
-        calendar.append([db["days"][i]["wkd"]*80, db["days"][i]["wksince"]*80,80,80,db["days"][i]["dt"],db["days"][i]["mn"]])
-    menu_current = 5
-    calendar_shown = True
+        calendar.append([db["days"][i]["wkd"]*80, db["days"][i]["wksince"]*80,80,80,db["days"][i]["dt"],db["days"][i]["mn"],db["days"][i]["yr"]])
+    #calendar_shown = True
 def createdb():
     global menu_current
     global db
@@ -526,6 +532,8 @@ def createdb():
         db["boolnames"].append(nam[0])
         db["booldefs"].append(nam[1])
         db["boolcols"].append(nam[2])
+    db["datealignment"]="left"
+    db["positions"]=[]
     db["days"]=[]
     day = {"wkd": -1, "dt": -1, "mn": -1, "yr": -1, "wksince": -1, "reminders": [], "ints": [], "bools": []}
     day["ints"]=db["intdefs"]
@@ -643,14 +651,14 @@ def message_press():
 print("Initializing menus...")
 menu_current = 0
 last_button = -1
-menus = [[],[],[],[],[],[]]
+menus = [[],[],[],[],[],[],[]]
 # if label, no w or h applicable, if centered, only y applicable
 # if centered button, no x applicable
 # type||xpos||ypos||w||h||center||text||font||highlighted
 # 0type 1xpos 2ypos 3w 4h 5center 6text 7font 8hl
 def buildmenus():
     global menus
-    menus = [[],[],[],[],[],[]]
+    menus = [[],[],[],[],[],[],[]]
     menus[0].append(["label",-1,100,-1,-1,True,tx[lan]["welcometo"],"large",False])
     menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
     menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
@@ -713,8 +721,14 @@ def buildmenus():
     menus[3].append(["button",900,425,120,30,False,tx[lan]["remove"],"small",False])
     menus[3].append(["button",900,475,120,30,False,tx[lan]["remove"],"small",False])
 
-    menus[5].append(["button",200,0,200,80,False,"↑↑↑","medium",False])
-    menus[5].append(["button",200,520,200,80,False,"↓↓↓","medium",False])
+    menus[5].append(["button", 0, 200, 80, 200, False, "OK", "medium", False])
+    menus[5].append(["button_context", 0, 400, 80, 100, False, "Hide", "small", False,"widgets_visualize",True])
+    menus[5].append(["button_context", 0, 400, 80, 100, False, "Show", "small", False,"widgets_visualize",False])
+
+    menus[6].append(["button_context",200,0,200,80,False,"↑↑↑","medium",False,"calendar_shown",True])
+    menus[6].append(["button_context",200,520,200,80,False,"↓↓↓","medium",False,"calendar_shown",True])
+    menus[6].append(["button_context",560,200,80,200,False,"<","medium",False,"calendar_shown",True])
+    menus[6].append(["button_context",0,200,80,200,False,">","medium",False,"calendar_shown",False])
 buildmenus()
 def draw_menu(phase=0):
     for index,item in enumerate(menus[phase]):
@@ -732,8 +746,8 @@ def draw_menu(phase=0):
                 DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]))
             else: # if not centered
                 DISPLAY.blit(name_surface, (item[1], item[2]))
-        elif item[0] == "button" or item[0] == "textfield":
-            if item[0] == "button":
+        elif item[0] == "button" or item[0] == "button_context" or item[0] == "textfield":
+            if item[0] == "button" or item[0] == "button_context":
                 label=item[6]
             else:
                 label=str(globals()[item[6]])
@@ -743,22 +757,28 @@ def draw_menu(phase=0):
                 name_surface = my_font_m.render(label, False, (0, 0, 0))
             elif item[7] == "small":
                 name_surface = my_font_s.render(label, False, (0, 0, 0))
-            if item[5] == True: # if centered
-                if item[8]:
-                    pygame.draw.rect(DISPLAY,(127,127,127),(512-(item[3]/2),item[2],item[3],item[4]))
-                DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
-                pygame.draw.rect(DISPLAY,(0,0,0),(512-(item[3]/2),item[2],item[3],item[4]),5)
-            else: # if not centered
-                if item[8]:
-                    pygame.draw.rect(DISPLAY,(127,127,127),(item[1],item[2],item[3],item[4]))
-                DISPLAY.blit(name_surface, (item[1]+item[3]/2-(name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
-                pygame.draw.rect(DISPLAY,(0,0,0),(item[1],item[2],item[3],item[4]),5)
+            draw=True
+            if item[0] == "button_context" and globals()[item[9]] == (not item[10]):
+                draw=False
+            if draw:
+                if item[5] == True: # if centered
+                    if item[8]:
+                        pygame.draw.rect(DISPLAY,(127,127,127),(512-(item[3]/2),item[2],item[3],item[4]))
+                    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
+                    pygame.draw.rect(DISPLAY,(0,0,0),(512-(item[3]/2),item[2],item[3],item[4]),5)
+                else: # if not centered
+                    if item[8]:
+                        pygame.draw.rect(DISPLAY,(127,127,127),(item[1],item[2],item[3],item[4]))
+                    DISPLAY.blit(name_surface, (item[1]+item[3]/2-(name_surface.get_size()[0] / 2), item[2]+item[4]/2-name_surface.get_size()[1]/2))
+                    pygame.draw.rect(DISPLAY,(0,0,0),(item[1],item[2],item[3],item[4]),5)
 def menu_highlight():
     global last_button
     global menu_current
     global calendar_shown
     global calendar_scroll
     for index,button in enumerate(menus[menu_current]):
+        if button[0] == "button_context" and globals()[button[9]] == (not button[10]):
+            continue
         if button[5] == True:
             iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
         else:
@@ -766,7 +786,7 @@ def menu_highlight():
         if iscolliding:
             button[8] = True
             last_button = index
-            if menu_current==5 and calendar_shown:
+            if menu_current==6 and calendar_shown:
                 if index==0:
                     calendar_scroll=20
                 elif index==1:
@@ -777,10 +797,14 @@ def menu_press():
     global menu_current
     global lan
     global calendar_scroll
+    global calendar_shown
+    global widgets_visualize
     if last_button != -1:
         button = menus[menu_current][last_button]
         button[8] = False
         last_button = -1
+        if button[0] == "button_context" and globals()[button[9]] == (not button[10]):
+            return
         if button is menus[0][3]:
             terminate_program()
         elif button is menus[0][1]:
@@ -821,16 +845,25 @@ def menu_press():
         elif button is menus[3][11]:
             menu_current = 2
         elif button is menus[3][12]:
-            createdb()
-        elif button is menus[4][1]:
-            dblist_show()
-        elif button is menus[4][2]:
-            menu_current = 0
-        elif button is menus[5][0] or button is menus[5][1]:
+            generate_widgets()
+            menu_current = 5
+        elif button is menus[5][0]:
+            print("OK BABY")
+        elif button is menus[5][1]:
+            widgets_visualize=False
+        elif button is menus[5][2]:
+            widgets_visualize=True
+        elif button is menus[6][0] or button is menus[6][1]:
             calendar_scroll=0
+        elif button is menus[6][2] or button is menus[6][3]:
+            calendar_shown = not calendar_shown
         else:
             try:
-                if button is menus[4][3]:
+                if button is menus[4][1]:
+                    dblist_show()
+                elif button is menus[4][2]:
+                    menu_current = 0
+                elif button is menus[4][3]:
                     loaddb(menus[4][3][6])
                 elif button is menus[4][4]:
                     loaddb(menus[4][4][6])
@@ -850,8 +883,145 @@ def menu_press():
             elif button is menus[3][i]:
                 db_bools.pop(i-13)
 #endregion
+#############EDITOR############################
+widgets=[["__clock",0,0,0],["__date",0,800,0],["calories",0,256,200],["jerkoff",1,356,200],["kilometers ran",2,256,300],["kilometers hana",3,456,300]]
+widget_selected = -1
+widget_selection_offset=[]
+widget_alignments="left"
+widget_datesize=0
+widgets_visualize=True
+def generate_widgets():
+    global widgets
+    x=300
+    y=80
+    widgets = [["__clock", 0, 60, 20, (0,0,0),-1], ["__date", 0, 800, 20, (0,0,0),-1]]
+    for index,item in enumerate(db_nums):
+        widgets.append([item[0],0,x,y,item[2],item[1]])
+        if y<480:
+            y+=80
+        else:
+            x+=250
+            y=80
+    for index,item in enumerate(db_bools):
+        widgets.append([item[0],4,x,y,item[2],item[1]])
+        if y<480:
+            y+=80
+        else:
+            x+=250
+            y=80
 
+def highlight_ewidget():
+    global widget_selected
+    global widget_selection_offset
+    global widget_datesize
+    global widget_alignments
+    if widget_selected==-1:
+        for index, widget in enumerate(widgets):
+            if index==1 and pygame.Rect(widget[2]-20,widget[3]+40,40,40).collidepoint(pygame.mouse.get_pos()):
+                if widget_alignments=="left":
+                    widget_alignments="center"
+                elif widget_alignments=="center":
+                    widget_alignments="right"
+                elif widget_alignments=="right":
+                    widget_alignments="left"
+
+            if pygame.Rect(widget[2]-20,widget[3],40,40).collidepoint(pygame.mouse.get_pos()):
+                widget_selection_offset = [pygame.mouse.get_pos()[0]-widget[2],pygame.mouse.get_pos()[1]-widget[3]]
+                widget_selected=index
+
+            if index!=0 and index!=1 and pygame.Rect(widget[2] -20, widget[3]-40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                if type(widget[5])==bool:
+                    if widget[1]<6:
+                        widget[1]+=1
+                    else:
+                        widget[1]=4
+                else:
+                    if widget[1]<3:
+                        widget[1]+=1
+                    else:
+                        widget[1]=0
+def press_ewidget():
+    global widget_selected
+    widget_selected=-1
+def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
+    global widget_selected
+    global widget_datesize
+    global widgets_visualize
+    defvalue=str(defvalue)
+    if text=="__clock":
+        name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+    elif text=="__date":
+        name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][counter-1] + " " + str(current_year), False, (0, 0, 0))
+        widget_datesize = name_surface.get_size()[0]
+        if widgets_visualize:
+            DISPLAY.blit(my_font_s.render("↔", False, (230, 230, 230)), (placing_x -20, placing_y +42))
+            pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y+40, 40, 40), 5)
+    else:
+        if widgets_visualize:
+            DISPLAY.blit(my_font_s.render("S", False, (230, 230, 230)), (placing_x -8, placing_y -36))
+            pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y-40, 40, 40), 5)
+
+
+    if widgets_visualize:
+        if widget_selected==index:
+            pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x - 20, placing_y, 40, 40))
+            DISPLAY.blit(my_font_s.render("≡", False, (255, 255, 255)), (placing_x - 8, placing_y+2))
+        else:
+            DISPLAY.blit(my_font_s.render("≡", False, (230, 230, 230)), (placing_x - 8, placing_y + 2))
+            pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x - 20, placing_y, 40, 40), 5)
+    if text=="__clock":
+        DISPLAY.blit(name_surface, (placing_x, placing_y))
+    elif text=="__date":
+        if widget_alignments=="left":
+            DISPLAY.blit(name_surface, (placing_x, placing_y))
+        elif widget_alignments=="center":
+            DISPLAY.blit(name_surface, (placing_x-widget_datesize/2, placing_y))
+        elif widget_alignments=="right":
+            DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
+    else:
+        name_surfacea = my_font_s.render(text, False, color)
+        DISPLAY.blit(name_surfacea, (placing_x - name_surfacea.get_size()[0] / 2, placing_y))
+        name_surface = my_font_s.render(defvalue, False, (0, 0, 0))
+        #if name_surface.get_size()[0] < 34:
+        #    tempsize = 34
+        #else:
+        tempsize = name_surface.get_size()[0]
+        if style == 4:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
+        elif style == 5:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
+        elif style == 6:
+            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
+        elif style!=1:
+            DISPLAY.blit(name_surface, (placing_x - name_surface.get_size()[0] / 2, placing_y + 45))
+        else:
+            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 8 + tempsize/2+20 - name_surface.get_size()[0]/2, placing_y))
+
+        if style==0:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - tempsize/2 - 20, placing_y+40, tempsize+40, 40),5)
+        elif style==1:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, tempsize+40, 40),5)
+        elif style==2:
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 60, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - tempsize / 2 - 50, placing_y + 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + tempsize / 2 + 30, placing_y + 40))
+        elif style==3:
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 70, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - tempsize / 2 - 60, placing_y + 44))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + tempsize / 2 + 28, placing_y + 44))
+        elif style==4:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - 20, placing_y+40, 40, 40),5)
+        elif style==5:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, 40, 40),5)
+        elif style==6:
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - name_surfacea.get_size()[0] / 2 - 48 , placing_y-5, 40, 40),5)
 ###############CALENDAR
+#region
 calendar_shown = False
 calendar_scroll = 0
 calendar_scrolled = 0
@@ -861,10 +1031,16 @@ calendar=[]
 def draw_calendar():
     global calendar_scrolledmonth
     global calendar_redbit
+    global current_date
+    global current_month
+    global current_year
     for key in calendar:
         ypos = calendar_scrolled + key[1]
         if datetime.datetime.today().day==key[4] and datetime.datetime.today().month==key[5]:
             calendar_redbit=(key[0], ypos)
+            current_date = key[4]
+            current_month = key[5]
+            current_year = key[6]
         if 260 >= ypos >= 180:
             calendar_scrolledmonth = key[5]
         if 520 >= ypos >=0:
@@ -874,7 +1050,8 @@ def draw_calendar():
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,0,563,80))
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,520,563,80))
     DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], False, (0, 0, 0)), (420, 20))
-counter = 0
+#endregion
+counter = 1
 print("Beginning main loop...")
 while True:
     # step
@@ -903,6 +1080,9 @@ while True:
                     menus[3][i + 1][6] = tx[lan]["empty"]
                     menus[3][i + 1][9] = (127,127,127)
                     menus[3][i + 13][1] = 1100
+        elif menu_current == 5 and widget_selected !=- 1:
+            widgets[widget_selected][2]=round((pygame.mouse.get_pos()[0]-widget_selection_offset[0])/20)*20
+            widgets[widget_selected][3]=round((pygame.mouse.get_pos()[1]-widget_selection_offset[1])/20)*20
     #endregion
     # events
     #region
@@ -916,6 +1096,8 @@ while True:
                 elif colorpicker_show:
                     colorpicker_press()
                 else:
+                    if menu_current==5:
+                        press_ewidget()
                     menu_press()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if message_show:
@@ -926,10 +1108,14 @@ while True:
                 elif colorpicker_show:
                     colorpicker_highlight()
                 else:
+                    if menu_current==5:
+                        highlight_ewidget()
                     menu_highlight()
         if event.type == pygame.USEREVENT:
             calendar_scrolled += calendar_scroll
             counter+=1
+            if counter==13:
+                counter=1
             if counter % 4 == 0:
                 if blinker==" ":
                     blinker="|"
@@ -947,8 +1133,18 @@ while True:
         elif colorpicker_show:
             draw_colorpicker()
         else:
-            if menu_current==5 and calendar_shown:
-                draw_calendar()
+            if menu_current==5:
+                for index, widget in enumerate(widgets):
+                    draw_ewidget(widgets[index][2], widgets[index][3], widgets[index][0], index, widgets[index][1],widgets[index][4],widgets[index][5])
+            elif menu_current==6:
+                if calendar_shown:
+                    draw_calendar()
+                else:
+                    name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+                    DISPLAY.blit(name_surface, (0,0))
+                name_surface = my_font_m.render(str(current_date)+" "+tx[lan]["months"][current_month-1]+" "+str(current_year), False, (0, 0, 0))
+                DISPLAY.blit(name_surface, (1024 - (name_surface.get_size()[0]),0))
             draw_menu(menu_current)
+            #print(db_nums)
     pygame.display.update()
     #endregion
