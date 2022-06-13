@@ -109,8 +109,6 @@ my_font_m = pygame.font.Font("calibri.ttf", 48)
 my_font_s = pygame.font.Font("calibri.ttf", 36)
 my_font_xs = pygame.font.Font("calibri.ttf", 24)
 
-############CALENDAR INTTIALIZE#######################
-
 lower = False
 keys = []
 special_keys = []
@@ -157,8 +155,9 @@ digit_special_keys.append([350,500,100,100,"C",False])
 digit_special_keys.append([200,500,100,100,"֍",False])
 digit_special_keys.append([550,500,100,100,".",False])
 
-def okfuncs(which):
+def okfuncs(which,misc=-1):
     global db_editingcol
+    global widget_editingpart
     if which==0:
         global db_dbname
         db_dbname = db_dbname.replace(" ", "_")
@@ -190,6 +189,27 @@ def okfuncs(which):
             db_bools.append([db_editingname,True,db_editingcol])
         else:
             db_bools.append([db_editingname,False,db_editingcol])
+    if which==5:
+        newdb = db.copy()
+        tsatsa=round((db["days"][currentday]["ints"][misc]-widget_editingpart)*100)/100
+        if tsatsa == int(tsatsa):
+            tsatsa=int(tsatsa)
+        newdb["days"][currentday]["ints"][misc] = tsatsa
+        updatedb(newdb)
+    if which==6:
+        newdb = db.copy()
+        tsatsa=round((db["days"][currentday]["ints"][misc]+widget_editingpart)*100)/100
+        if tsatsa == int(tsatsa):
+            tsatsa=int(tsatsa)
+        newdb["days"][currentday]["ints"][misc] = tsatsa
+        updatedb(newdb)
+    if which==7:
+        newdb = db.copy()
+        widget_editingpart = round(widget_editingpart*100)/100
+        if widget_editingpart == int(widget_editingpart):
+            widget_editingpart = int(widget_editingpart)
+        newdb["days"][currentday]["ints"][misc] = widget_editingpart
+        updatedb(newdb)
 def hide_keyboard():
     global keyboard_shown
     global keyboard_entry
@@ -518,7 +538,9 @@ def loaddb(filename):
     global calendar
     global currentday
     global calendar_scrolled
+    global db_dbname
     currentday=0
+    db_dbname = filename
     f = open(filename, "r")
     db = json.loads(f.read())
     calendar=[]
@@ -913,32 +935,44 @@ def menu_press():
 #############EDITOR############################
 widgets=[]
 widget_selected = -1
+widget_selected_actual = -1
+widget_selected_type="bool"
 widget_selection_offset=[]
 widget_alignments="left"
 widget_datesize=0
 widgets_visualize=True
+widget_tempsizes=[[0,0],[0,0],[0,0]]
+boolstart=-1
+widget_editingpart=""
 def load_widgets():
     global db
     global widgets
     global widget_alignments
     global currentday
+    global widget_tempsizes
+    global boolstart
     widget_alignments = db["datealignment"]
     widgets=[["__clock",0,db["positionstyles"][0][0],db["positionstyles"][0][1],(0,0,0),-1]]
     widgets.append(["__date",0,db["positionstyles"][1][0],db["positionstyles"][1][1],(0,0,0),-1])
     widgets.append(["__rem",0,db["positionstyles"][2][0],db["positionstyles"][2][1],(0,0,0),-1])
+    widget_tempsizes = [[0,0],[0,0],[0,0]]
     for index,item in enumerate(db["days"][currentday]["ints"]):
         widgets.append([db["intnames"][index],
                         db["positionstyles"][index+3][2],db["positionstyles"][index+3][0],
                         db["positionstyles"][index+3][1],db["intcols"][index],str(item)])
+        widget_tempsizes.append([0,0])
     boolstart=len(widgets)
     for index,item in enumerate(db["days"][currentday]["bools"]):
         widgets.append([db["boolnames"][index],
                         db["positionstyles"][index+boolstart][2],db["positionstyles"][index+boolstart][0],
                         db["positionstyles"][index+boolstart][1],db["boolcols"][index],item])
+        widget_tempsizes.append([0,0])
 
 def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     global widget_selected
+    global widget_selected_actual
     global widget_datesize
+    global widget_tempsizes
     value=str(value)
     if text=="__clock":
         name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
@@ -963,46 +997,160 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
         name_surfacea = my_font_s.render(text, False, color)
-        DISPLAY.blit(name_surfacea, (placing_x - name_surfacea.get_size()[0] / 2, placing_y))
+        widget_tempsizes[index][0]=name_surfacea.get_size()[0]
+        DISPLAY.blit(name_surfacea, (placing_x - widget_tempsizes[index][0] / 2, placing_y))
         name_surface = my_font_s.render(value, False, (0, 0, 0))
-        #if name_surface.get_size()[0] < 34:
-        #    tempsize = 34
-        #else:
-        tempsize = name_surface.get_size()[0]
-        if style == 4:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
-            DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
-        elif style == 5:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
-            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
-        elif style == 6:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
-            DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
-        elif style!=1:
-            DISPLAY.blit(name_surface, (placing_x - name_surface.get_size()[0] / 2, placing_y + 45))
-        else:
-            DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 8 + tempsize/2+20 - name_surface.get_size()[0]/2, placing_y))
+        widget_tempsizes[index][1] = name_surface.get_size()[0]
 
         if style==0:
-            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - tempsize/2 - 20, placing_y+40, tempsize+40, 40),5)
+            if widget_selected_actual==index:
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][1]/2 - 20, placing_y+40, widget_tempsizes[index][1]+40, 40))
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - widget_tempsizes[index][1]/2 - 20, placing_y+40, widget_tempsizes[index][1]+40, 40),5)
         elif style==1:
-            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, tempsize+40, 40),5)
+            if widget_selected_actual==index:
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, widget_tempsizes[index][1]+40, 40))
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, widget_tempsizes[index][1]+40, 40),5)
         elif style==2:
-            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 60, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - tempsize / 2 - 50, placing_y + 40))
-            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + tempsize / 2 + 30, placing_y + 40))
+            if widget_selected_actual==index and widget_selected_type=="int-":
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 50, placing_y + 40))
+            if widget_selected_actual==index and widget_selected_type=="int+":
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40), 5)
+            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 30, placing_y + 40))
         elif style==3:
-            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 70, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - tempsize / 2 - 60, placing_y + 44))
-            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + tempsize / 2 + 28, placing_y + 44))
+            if widget_selected_actual==index and widget_selected_type=="int--":
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 44))
+            if widget_selected_actual==index and widget_selected_type=="int++":
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40))
+            pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40), 5)
+            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 28, placing_y + 44))
         elif style==4:
+            if widget_selected_actual==index:
+                pygame.draw.rect(DISPLAY,(127,127,127), (placing_x - 20, placing_y+40, 40, 40))
             pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - 20, placing_y+40, 40, 40),5)
         elif style==5:
-            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, 40, 40),5)
+            if widget_selected_actual==index:
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, 40, 40))
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, 40, 40),5)
         elif style==6:
-            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - name_surfacea.get_size()[0] / 2 - 48 , placing_y-5, 40, 40),5)
+            if widget_selected_actual==index:
+                pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][0] / 2 - 48 , placing_y-5, 40, 40))
+            pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - widget_tempsizes[index][0] / 2 - 48 , placing_y-5, 40, 40),5)
+
+
+        if style == 4:
+            if value=="True":
+                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
+        elif style == 5:
+            if value=="True":
+                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
+        elif style == 6:
+            if value=="True":
+                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
+        elif style!=1:
+            DISPLAY.blit(name_surface, (placing_x - widget_tempsizes[index][1] / 2, placing_y + 45))
+        else:
+            DISPLAY.blit(name_surface, (placing_x + widget_tempsizes[index][0] / 2 + 8 + widget_tempsizes[index][1]/2+20 - widget_tempsizes[index][1]/2, placing_y))
+
+def updatedb(newdb):
+    global db_dbname
+    with open(db_dbname, 'w') as outfile:
+        json.dump(newdb, outfile)
+    loaddb(db_dbname)
+def highlight_awidget(placing_x,placing_y,index,style):
+    global widget_selected
+    global widget_selected_actual
+    global widget_selected_type
+    global widget_datesize
+    global widget_alignments
+    global widget_tempsizes
+    if widget_selected==-1:
+        if style==0:
+            if pygame.Rect(placing_x - widget_tempsizes[index][1]/2 - 20, placing_y+40, widget_tempsizes[index][1]+40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int"
+                print("change int number "+str(index-3))
+        elif style==1:
+            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, widget_tempsizes[index][1]+40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int"
+                print("change int number "+str(index-3))
+        elif style==2:
+            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int-"
+                print("minus int number "+str(index-3))
+            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int+"
+                print("plus int number "+str(index-3))
+        elif style==3:
+            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int--"
+                print("minus minus int number "+str(index-3))
+            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-3
+                widget_selected_actual=index
+                widget_selected_type="int++"
+                print("plus plus int number "+str(index-3))
+        elif style==4:
+            if pygame.Rect(placing_x - 20, placing_y+40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-boolstart
+                widget_selected_actual=index
+                widget_selected_type="bool"
+                print("bool int number "+str(index-boolstart))
+        elif style==5:
+            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-boolstart
+                widget_selected_actual=index
+                widget_selected_type="bool"
+                print("bool int number "+str(index-boolstart))
+        elif style==6:
+            if pygame.Rect(placing_x - widget_tempsizes[index][0] / 2 - 48 , placing_y-5, 40, 40).collidepoint(pygame.mouse.get_pos()):
+                widget_selected=index-boolstart
+                widget_selected_actual=index
+                widget_selected_type="bool"
+                print("bool int number "+str(index-boolstart))
+
+def press_awidget():
+    global widget_selected
+    global widget_selected_actual
+    global widget_selected_type
+    global currentday
+    if widget_selected!=-1:
+        if widget_selected_type=="bool":
+            newdb = db.copy()
+            newdb["days"][currentday]["bools"][widget_selected] = not db["days"][currentday]["bools"][widget_selected]
+            updatedb(newdb)
+        elif widget_selected_type=="int-":
+            newdb = db.copy()
+            newdb["days"][currentday]["ints"][widget_selected] = db["days"][currentday]["ints"][widget_selected]-1
+            updatedb(newdb)
+        elif widget_selected_type=="int+":
+            newdb = db.copy()
+            newdb["days"][currentday]["ints"][widget_selected] = db["days"][currentday]["ints"][widget_selected]+1
+            updatedb(newdb)
+        elif widget_selected_type=="int--":
+            display_keyboard(db["intnames"][widget_selected]+" = "+str(db["days"][currentday]["ints"][widget_selected])+" - ?","widget_editingpart",True,False,False,True,"okfuncs(5,"+str(widget_selected)+")","",False)
+        elif widget_selected_type=="int++":
+            display_keyboard(db["intnames"][widget_selected]+" = "+str(db["days"][currentday]["ints"][widget_selected])+" + ?","widget_editingpart",True,False,False,True,"okfuncs(6,"+str(widget_selected)+")","",False)
+        elif widget_selected_type=="int":
+            display_keyboard(db["intnames"][widget_selected]+" = ?","widget_editingpart",True,False,False,True,"okfuncs(7,"+str(widget_selected)+")","",False)
+        widget_selected=-1
+        widget_selected_actual=-1
 def generate_widgets():
     global widgets
     x=300
@@ -1218,6 +1366,9 @@ while True:
                 else:
                     if menu_current==5:
                         press_ewidget()
+                    elif menu_current==6:
+                        if not calendar_shown:
+                            press_awidget()
                     menu_press()
         if event.type == pygame.MOUSEBUTTONDOWN:
             if message_show:
@@ -1230,6 +1381,10 @@ while True:
                 else:
                     if menu_current==5:
                         highlight_ewidget()
+                    elif menu_current==6:
+                        if not calendar_shown:
+                            for index, widget in enumerate(widgets):
+                                highlight_awidget(widgets[index][2], widgets[index][3], index, widgets[index][1])
                     menu_highlight()
         if event.type == pygame.USEREVENT:
             calendar_scrolled += calendar_scroll
