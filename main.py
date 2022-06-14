@@ -1142,6 +1142,7 @@ def updatedb(newdb):
     global db_dbname
     with open(db_dbname, 'w') as outfile:
         json.dump(newdb, outfile)
+    loaddb(db_dbname,False)
 def highlight_awidget(placing_x,placing_y,index,style):
     global widget_selected
     global widget_selected_actual
