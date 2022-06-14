@@ -38,7 +38,10 @@ tx = {
         "hide": "Hide",
         "reminders": "Reminders:",
         "refresh": "refresh",
-        "otherlang": "БГ",
+        "no": "no",
+        "yes": "yes",
+        "editing": "editing",
+        "otherlang": "БГ"
     },
     "bg": {
         "error": "Грешка",
@@ -78,6 +81,9 @@ tx = {
         "hide": "Скрий",
         "reminders": "Бележки:",
         "refresh": "опресни",
+        "no": "не",
+        "yes": "да",
+        "editing": "редакт.",
         "otherlang": "EN"
     }
 }
@@ -944,6 +950,7 @@ widgets_visualize=True
 widget_tempsizes=[[0,0],[0,0],[0,0]]
 boolstart=-1
 widget_editingpart=""
+istoday=True
 def load_widgets():
     global db
     global widgets
@@ -973,11 +980,20 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     global widget_selected_actual
     global widget_datesize
     global widget_tempsizes
+    global istoday
     value=str(value)
     if text=="__clock":
-        name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+        if istoday:
+            name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+        else:
+            name_surface = my_font_m.render(tx[lan]["editing"], False, (128, 128, 128))
     elif text=="__date":
-        name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
+        if db["days"][currentday]["dt"] == datetime.datetime.today().day and db["days"][currentday]["mn"] == datetime.datetime.today().month and db["days"][currentday]["yr"] == datetime.datetime.today().year:
+            name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
+            istoday=True
+        else:
+            name_surface = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), False, (128, 128, 128))
+            istoday=False
         widget_datesize = name_surface.get_size()[0]
     elif text == "__rem":
         name_surface = my_font_xs.render(tx[lan]["reminders"], False, (0, 0, 0))
@@ -1294,6 +1310,15 @@ calendar_scrolled = 0
 calendar_scrolledmonth = 0
 calendar_redbit=(0,0)
 calendar=[]
+def calendar_highlight():
+    global currentday
+    global calendar_scrolled
+    for index,key in enumerate(calendar):
+        ypos = calendar_scrolled + key[1]
+        if 520 >= ypos >=0 and 80 < pygame.mouse.get_pos()[1] < 520:
+            if pygame.Rect(key[0], ypos , key[2], key[3]).collidepoint(pygame.mouse.get_pos()) and currentday!=index:
+                currentday=index
+                load_widgets()
 def draw_calendar():
     global calendar_scrolledmonth
     global calendar_redbit
@@ -1318,6 +1343,18 @@ def draw_calendar():
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,0,563,80))
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,520,563,80))
     DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], False, (0, 0, 0)), (420, 20))
+    y=200
+    for index,item in enumerate(db["intnames"]):
+        displaying=my_font_s.render(item + " = " + str(db["days"][currentday]["ints"][index]), False, (db["intcols"][index][0],db["intcols"][index][1],db["intcols"][index][2]))
+        DISPLAY.blit(displaying,(670,y))
+        y+=30
+    for index,item in enumerate(db["boolnames"]):
+        if db["days"][currentday]["bools"][index] == True:
+            displaying=my_font_s.render(item + " = "+tx[lan]["yes"], False, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
+        else:
+            displaying=my_font_s.render(item + " = "+tx[lan]["no"], False, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
+        DISPLAY.blit(displaying,(670,y))
+        y+=30
 #endregion
 counter = 1
 print("Beginning main loop...")
@@ -1385,6 +1422,8 @@ while True:
                         if not calendar_shown:
                             for index, widget in enumerate(widgets):
                                 highlight_awidget(widgets[index][2], widgets[index][3], index, widgets[index][1])
+                        else:
+                            calendar_highlight()
                     menu_highlight()
         if event.type == pygame.USEREVENT:
             calendar_scrolled += calendar_scroll
