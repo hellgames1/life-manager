@@ -537,7 +537,7 @@ db_editingname = ""
 db_editingdefault = 0
 db_editingcol = (0,0,0)
 db_length=365
-def loaddb(filename):
+def loaddb(filename,set_current_day):
     global db
     global menu_current
     global calendar_shown
@@ -545,18 +545,18 @@ def loaddb(filename):
     global currentday
     global calendar_scrolled
     global db_dbname
-    currentday=0
     db_dbname = filename
     f = open(filename, "r")
     db = json.loads(f.read())
     calendar=[]
     for i in range(len(db["days"])):
         calendar.append([db["days"][i]["wkd"]*80, db["days"][i]["wksince"]*80,80,80,db["days"][i]["dt"],db["days"][i]["mn"],db["days"][i]["yr"]])
-        if db["days"][i]["dt"] == datetime.datetime.today().day:
-            if db["days"][i]["mn"] == datetime.datetime.today().month:
-                if db["days"][i]["yr"] == datetime.datetime.today().year:
-                    currentday = len(calendar)-1
-                    calendar_scrolled= - db["days"][i]["wksince"]*80+260
+        if set_current_day:
+            if db["days"][i]["dt"] == datetime.datetime.today().day:
+                if db["days"][i]["mn"] == datetime.datetime.today().month:
+                    if db["days"][i]["yr"] == datetime.datetime.today().year:
+                        currentday = len(calendar)-1
+                        calendar_scrolled= - db["days"][i]["wksince"]*80+260
 
     #calendar_shown = True
     load_widgets()
@@ -919,17 +919,17 @@ def menu_press():
                 elif button is menus[4][2]:
                     menu_current = 0
                 elif button is menus[4][3]:
-                    loaddb(menus[4][3][6])
+                    loaddb(menus[4][3][6],True)
                 elif button is menus[4][4]:
-                    loaddb(menus[4][4][6])
+                    loaddb(menus[4][4][6],True)
                 elif button is menus[4][5]:
-                    loaddb(menus[4][5][6])
+                    loaddb(menus[4][5][6],True)
                 elif button is menus[4][6]:
-                    loaddb(menus[4][6][6])
+                    loaddb(menus[4][6][6],True)
                 elif button is menus[4][7]:
-                    loaddb(menus[4][7][6])
+                    loaddb(menus[4][7][6],True)
                 elif button is menus[4][8]:
-                    loaddb(menus[4][8][6])
+                    loaddb(menus[4][8][6],True)
             except IndexError:
                 print("index error baby")
         for i in range(13,22):
@@ -1079,7 +1079,6 @@ def updatedb(newdb):
     global db_dbname
     with open(db_dbname, 'w') as outfile:
         json.dump(newdb, outfile)
-    loaddb(db_dbname)
 def highlight_awidget(placing_x,placing_y,index,style):
     global widget_selected
     global widget_selected_actual
@@ -1343,7 +1342,9 @@ def draw_calendar():
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,0,563,80))
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,520,563,80))
     DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], False, (0, 0, 0)), (420, 20))
-    y=200
+    dayshowing = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), False, (0, 0, 0))
+    DISPLAY.blit(dayshowing,(792-dayshowing.get_size()[0]/2,0))
+    y=60
     for index,item in enumerate(db["intnames"]):
         displaying=my_font_s.render(item + " = " + str(db["days"][currentday]["ints"][index]), False, (db["intcols"][index][0],db["intcols"][index][1],db["intcols"][index][2]))
         DISPLAY.blit(displaying,(670,y))
