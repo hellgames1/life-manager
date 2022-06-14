@@ -94,7 +94,6 @@ print("Importing libraries...")
 import pygame
 import json
 import datetime
-import random
 import os
 from sys import exit as terminate_program
 pygame.init()
@@ -149,7 +148,7 @@ def draw_message():
     name_surface = my_font_m.render("OK", False, (0, 0, 0))
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
     if not run:
-        name_surface=my_font_xs.render(os.getcwd(),False,(0,0,0))
+        name_surface=my_font_xs.render(os.getcwd(),True,(0,0,0))
         DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 520))
 
 
@@ -181,7 +180,7 @@ def download_font():
         import requests
     except ModuleNotFoundError:
         run=False
-        display_message("\"requests\" module not found!@Please install it, or download@\"calibri.ttf\" manually and place@it in the directory below!")
+        display_message("\"requests\" module not found!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
     else:
         try:
             URL = "https://github.com/hellgames1/life-manager/raw/main/calibri.ttf"
@@ -1525,6 +1524,8 @@ while True:
                         draw_awidget(widgets[index][2], widgets[index][3], widgets[index][0], index, widgets[index][1],
                                      widgets[index][4], widgets[index][5])
             draw_menu(menu_current)
+    pygame.draw.rect(DISPLAY, (255, 0, 0), (1024, 0,1500,2500))
+    pygame.draw.rect(DISPLAY, (255, 0, 0), (0,600,2500,1900))
             #print(db_nums)
     pygame.display.update()
     #endregion
