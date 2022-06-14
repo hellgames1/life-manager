@@ -107,13 +107,126 @@ current_month = datetime.datetime.today().month
 current_date = datetime.datetime.today().day
 current_year = datetime.datetime.today().year
 #endregion
+###########MESSAGE ENGINE INITIALIZE####################
+#region
+print("Initializing message engine...")
+message_show = False
+message_to_show = "You can't leave@any field empty!"
+message_ok_hl = False
+msg_okfunc=""
+
+def display_message(title,okfunc=""):
+    global message_show
+    global message_ok_hl
+    global message_to_show
+    global msg_okfunc
+    if okfunc!="":
+        msg_okfunc=okfunc
+    message_to_show = title
+    message_ok_hl = False
+    message_show = True
+def draw_message():
+    global message_to_show
+    global terminal_message
+    messages = message_to_show.split("@")
+    name_surfaces=[]
+    heights=[]
+    total_height=0
+    index=0
+    for message in messages:
+        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
+        total_height += name_surfaces[index].get_size()[1]+10
+        heights.append(total_height)
+        index+=1
+    for index, surface in enumerate(name_surfaces):
+        DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
+
+    if message_ok_hl:
+        pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
+
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
+    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
+    if not run:
+        name_surface=my_font_xs.render(os.getcwd(),False,(0,0,0))
+        DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 520))
+
+
+def message_highlight():
+    global message_ok_hl
+    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
+        message_ok_hl = True
+def message_press():
+    global message_ok_hl
+    global message_to_show
+    global message_show
+    global msg_okfunc
+    if message_ok_hl:
+        message_ok_hl = False
+        message_to_show = "Error"
+        message_show = False
+    if msg_okfunc!="":
+        exec(msg_okfunc,globals())
+        msg_okfunc=""
+#endregion
+run=True
+def download_font():
+    global run
+    global my_font
+    global my_font_m
+    global my_font_s
+    global my_font_xs
+    try:
+        import requests
+    except ModuleNotFoundError:
+        run=False
+        display_message("\"requests\" module not found!@Please install it, or download@\"calibri.ttf\" manually and place@it in the directory below!")
+    else:
+        try:
+            URL = "https://github.com/hellgames1/life-manager/raw/main/calibri.ttf"
+            response = requests.get(URL,timeout=3)
+            response.raise_for_status()
+        except requests.exceptions.HTTPError:
+            run=False
+            display_message("HTTP Error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
+        except requests.exceptions.ConnectionError:
+            run=False
+            display_message("Connection error!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+        except requests.exceptions.Timeout:
+            run=False
+            display_message("Error - timeout!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+        except requests.exceptions.RequestException:
+            run=False
+            display_message("Weird error!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+        else:
+            try:
+                open("calibri.ttf", "wb").write(response.content)
+            except:
+                run=False
+                display_message("Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
+            else:
+                my_font = pygame.font.Font("calibri.ttf", 72)
+                my_font_m = pygame.font.Font("calibri.ttf", 48)
+                my_font_s = pygame.font.Font("calibri.ttf", 36)
+                my_font_xs = pygame.font.Font("calibri.ttf", 24)
+                display_message("Success!")
+
 ############KEYBOARD INITIALIZE#########################
 #region
 print("Initializing keyboard...")
-my_font = pygame.font.Font("calibri.ttf", 72)
-my_font_m = pygame.font.Font("calibri.ttf", 48)
-my_font_s = pygame.font.Font("calibri.ttf", 36)
-my_font_xs = pygame.font.Font("calibri.ttf", 24)
+try:
+    my_font = pygame.font.Font("calibri.ttf", 72)
+    my_font_m = pygame.font.Font("calibri.ttf", 48)
+    my_font_s = pygame.font.Font("calibri.ttf", 36)
+    my_font_xs = pygame.font.Font("calibri.ttf", 24)
+except FileNotFoundError:
+    my_font = pygame.font.SysFont("Calibri", 72)
+    my_font_m = pygame.font.SysFont("Calibri", 48)
+    my_font_s = pygame.font.SysFont("Calibri", 36)
+    my_font_xs = pygame.font.SysFont("Calibri", 24)
+    display_message("\"calibri.ttf\" font file not found!@Attempting to download from@hellgames1 github...","download_font()")
+    #display_message("\"calibri.ttf\" font file not found!@Please place the file in the@program's directory below!")
 
 lower = False
 keys = []
@@ -647,55 +760,6 @@ def dblist_show():
     menu_current=4
 #endregion
 
-###########MESSAGE ENGINE INITIALIZE####################
-#region
-print("Initializing message engine...")
-message_show = False
-message_to_show = "You can't leave@any field empty!"
-message_ok_hl = False
-
-def display_message(title):
-    global message_show
-    global message_ok_hl
-    global message_to_show
-    message_to_show = title
-    message_ok_hl = False
-    message_show = True
-def draw_message():
-    global message_to_show
-    messages = message_to_show.split("@")
-    name_surfaces=[]
-    heights=[]
-    total_height=0
-    index=0
-    for message in messages:
-        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
-        total_height += name_surfaces[index].get_size()[1]+10
-        heights.append(total_height)
-        index+=1
-    for index, surface in enumerate(name_surfaces):
-        DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
-
-    if message_ok_hl:
-        pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
-
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
-    name_surface = my_font_m.render("OK", False, (0, 0, 0))
-    DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
-def message_highlight():
-    global message_ok_hl
-    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
-        message_ok_hl = True
-def message_press():
-    global message_ok_hl
-    global message_to_show
-    global message_show
-    if message_ok_hl:
-        message_ok_hl = False
-        message_to_show = "Error"
-        message_show = False
-#endregion
 
 #############MENU ENGINE INITIALIZE#################
 #region
@@ -1443,6 +1507,8 @@ while True:
     if message_show:
         draw_message()
     else:
+        if not run:
+            break
         if keyboard_shown:
             draw_keyboard()
         elif colorpicker_show:
