@@ -131,15 +131,18 @@ def draw_message():
     name_surfaces=[]
     heights=[]
     total_height=0
+    max_width=612
     index=0
     for message in messages:
         name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
         total_height += name_surfaces[index].get_size()[1]+10
+        if (name_surfaces[index].get_size()[0]+20)>max_width:
+            max_width=name_surfaces[index].get_size()[0]+20
         heights.append(total_height)
         index+=1
     for index, surface in enumerate(name_surfaces):
         DISPLAY.blit(surface,(512 - (name_surfaces[index].get_size()[0] / 2), 200 - total_height/2 + heights[index]))
-    pygame.draw.rect(DISPLAY, (0, 0, 0), (200,100,612,400), 5)
+    pygame.draw.rect(DISPLAY, (0, 0, 0), (512-max_width/2,100,max_width,400), 5)
 
     if message_ok_hl:
         pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
