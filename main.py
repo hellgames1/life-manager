@@ -1017,6 +1017,7 @@ widget_tempsizes=[[0,0],[0,0],[0,0]]
 boolstart=-1
 widget_editingpart=""
 istoday=True
+editingtimer=0
 def load_widgets():
     global db
     global widgets
@@ -1047,12 +1048,13 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     global widget_datesize
     global widget_tempsizes
     global istoday
+    global editingtimer
     value=str(value)
     if text=="__clock":
         if istoday:
             name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
         else:
-            name_surface = my_font_m.render(tx[lan]["editing"], False, (128, 128, 128))
+            name_surface = my_font_m.render("e-00:"+str(round(editingtimer)), False, (128, 128, 128))
     elif text=="__date":
         if db["days"][currentday]["dt"] == datetime.datetime.today().day and db["days"][currentday]["mn"] == datetime.datetime.today().month and db["days"][currentday]["yr"] == datetime.datetime.today().year:
             name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
@@ -1379,11 +1381,16 @@ calendar=[]
 def calendar_highlight():
     global currentday
     global calendar_scrolled
+    global editingtimer
     for index,key in enumerate(calendar):
         ypos = calendar_scrolled + key[1]
         if 520 >= ypos >=0 and 80 < pygame.mouse.get_pos()[1] < 520:
             if pygame.Rect(key[0], ypos , key[2], key[3]).collidepoint(pygame.mouse.get_pos()) and currentday!=index:
                 currentday=index
+                if db["days"][currentday]["dt"] == datetime.datetime.today().day and db["days"][currentday]["mn"] == datetime.datetime.today().month and db["days"][currentday]["yr"] == datetime.datetime.today().year:
+                    editingtimer=0
+                else:
+                    editingtimer=60
                 load_widgets()
 def draw_calendar():
     global calendar_scrolledmonth
@@ -1495,6 +1502,13 @@ while True:
                     menu_highlight()
         if event.type == pygame.USEREVENT:
             calendar_scrolled += calendar_scroll
+            if editingtimer>0:
+                editingtimer-=0.1
+            elif editingtimer<0:
+                editingtimer=0
+            elif editingtimer==0 and not istoday:
+                loaddb(db_dbname,True)
+                draw_calendar()
             counter+=1
             if counter==13:
                 counter=1
