@@ -105,6 +105,7 @@ current_wkday = datetime.datetime.today().weekday()
 current_month = datetime.datetime.today().month
 current_date = datetime.datetime.today().day
 current_year = datetime.datetime.today().year
+antialiasing = False
 hasset = False
 #endregion
 ###########MESSAGE ENGINE INITIALIZE####################
@@ -135,7 +136,7 @@ def draw_message():
     max_width=612
     index=0
     for message in messages:
-        name_surfaces.append(my_font_m.render(message, False, (0, 0, 0)))
+        name_surfaces.append(my_font_m.render(message, antialiasing, (0, 0, 0)))
         total_height += name_surfaces[index].get_size()[1]+10
         if (name_surfaces[index].get_size()[0]+20)>max_width:
             max_width=name_surfaces[index].get_size()[0]+20
@@ -149,7 +150,7 @@ def draw_message():
         pygame.draw.rect(DISPLAY,(127,127,127),(406,400,212,75))
 
     pygame.draw.rect(DISPLAY, (0, 0, 0), (406,400,212,75), 5)
-    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    name_surface = my_font_m.render("OK", antialiasing, (0, 0, 0))
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 437-name_surface.get_size()[1]/2))
     if not run:
         name_surface=my_font_xs.render(os.getcwd(),True,(0,0,0))
@@ -205,19 +206,98 @@ def draw_flag(x,y,country):
         pygame.draw.rect(DISPLAY,green,(x,y+53,239,53))
         pygame.draw.rect(DISPLAY,red,(x,y+106,239,53))
     pygame.draw.rect(DISPLAY,(0,0,0),(x,y,240,160),5)
-while not hasset:
-    for event in pygame.event.get():
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                lan = "en"
-                hasset = True
-            elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                lan = "bg"
-                hasset = True
-    DISPLAY.fill(WHITE)
-    draw_flag(200,220,"gb")
-    draw_flag(600,220,"bg")
-    pygame.display.update()
+
+antialiasfont = pygame.font.SysFont("Calibri", 32)
+genericfont = pygame.font.SysFont("Calibri", 48)
+def draw_bigtext(x,y,text,aa):
+    drawsurf = antialiasfont.render(text, aa, (0, 0, 0))
+    drawsurf = pygame.transform.scale(drawsurf,(80,160))
+    DISPLAY.blit(drawsurf,(x+80,y))
+    pygame.draw.rect(DISPLAY,(0,0,0),(x,y,240,160),5)
+def settings():
+    global hasset
+    global lan
+    global antialiasing
+    hasset = False
+    while not hasset:
+        for eventh in pygame.event.get():
+            if eventh.type == pygame.MOUSEBUTTONDOWN:
+                if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                    lan = "en"
+                    hasset = True
+                elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                    lan = "bg"
+                    hasset = True
+        DISPLAY.fill(WHITE)
+        draw_flag(200, 220, "gb")
+        draw_flag(600, 220, "bg")
+        DISPLAY.blit(genericfont.render("Language / език", False, (0, 0, 0)), (360, 90))
+        pygame.display.update()
+    hasset = False
+    while not hasset:
+        for eventh in pygame.event.get():
+            if eventh.type == pygame.MOUSEBUTTONDOWN:
+                if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                    antialiasing = False
+                    hasset = True
+                elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                    antialiasing = True
+                    hasset = True
+        DISPLAY.fill(WHITE)
+        draw_bigtext(200, 220, "a", False)
+        draw_bigtext(600, 220, "a", True)
+        if lan == "bg":
+            DISPLAY.blit(genericfont.render("Искате ли изглаждане на текста?", False, (0, 0, 0)), (180, 90))
+            DISPLAY.blit(genericfont.render("Не се препоръчва за", False, (208, 0, 0)), (500, 400))
+            DISPLAY.blit(genericfont.render("бавни устройства!", False, (208, 0, 0)), (520, 450))
+        else:
+            DISPLAY.blit(genericfont.render("Do you want anti-aliased text?", False, (0, 0, 0)), (230, 90))
+            DISPLAY.blit(genericfont.render("Not recommended", False, (208, 0, 0)), (540, 400))
+            DISPLAY.blit(genericfont.render("for slow devices!", False, (208, 0, 0)), (550, 450))
+        pygame.display.update()
+    try:
+        fw = open("settings.cfg", "w")
+        towrite="error"
+        if lan == "en":
+            towrite = "1"
+        else:
+            towrite = "2"
+        if antialiasing:
+            towrite += "2"
+        else:
+            towrite += "1"
+        print("saving settings file...")
+        fw.write(towrite)
+        fw.close()
+    except:
+        print("ERROR SAVING SETTINGS FILE!")
+
+
+try:
+    print("opening settings file...")
+    f = open("settings.cfg", "r")
+    f_contents = f.read()
+    f.close()
+except:
+    print("no settings file")
+    settings()
+else:
+    if f_contents=="11":
+        lan = "en"
+        antialiasing = False
+    elif f_contents=="12":
+        lan = "en"
+        antialiasing = True
+    elif f_contents=="21":
+        lan = "bg"
+        antialiasing = False
+    elif f_contents=="22":
+        lan = "bg"
+        antialiasing = True
+    else:
+        print("settings file corrupt")
+        settings()
+
 def download_font():
     global run
     global my_font
@@ -573,10 +653,10 @@ def draw_keyboard():
                 pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
             pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
             if len(key)==7:
-                tempsurface = my_font_s.render(letters[key[4]], False, (0,0,0))
+                tempsurface = my_font_s.render(letters[key[4]], antialiasing, (0,0,0))
                 DISPLAY.blit(tempsurface,(key[0]+10,key[1]+50-tempsurface.get_size()[1]/2))
             else:
-                DISPLAY.blit(my_font.render(letters[key[4]], False, (0,0,0)),(key[0]+20,key[1]+20))
+                DISPLAY.blit(my_font.render(letters[key[4]], antialiasing, (0,0,0)),(key[0]+20,key[1]+20))
         for key in special_keys:
             if key[4] == "֍" and not keyboard_switchable:
                 continue
@@ -586,16 +666,16 @@ def draw_keyboard():
                 pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
             if len(key)==7:
                 if keyboard_multilingual:
-                    tempsurface = my_font_s.render(key[4], False, (0,0,0))
+                    tempsurface = my_font_s.render(key[4], antialiasing, (0,0,0))
                     DISPLAY.blit(tempsurface,(key[0]+10,key[1]+(key[3]/2)-tempsurface.get_size()[1]/2))
             else:
-                DISPLAY.blit(my_font.render(key[4], False, (0,0,0)),(key[0]+20,key[1]+20))
+                DISPLAY.blit(my_font.render(key[4], antialiasing, (0,0,0)),(key[0]+20,key[1]+20))
     else:
         for key in digit_keys:
             if key[5]:
                 pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
             pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
-            DISPLAY.blit(my_font.render(str(key[4]), False, (0,0,0)),(key[0]+20,key[1]+20))
+            DISPLAY.blit(my_font.render(str(key[4]), antialiasing, (0,0,0)),(key[0]+20,key[1]+20))
         for key in digit_special_keys:
             if key[4] == "֍" and not keyboard_switchable:
                 continue
@@ -604,12 +684,12 @@ def draw_keyboard():
             if key[5]:
                 pygame.draw.rect(DISPLAY,(127,127,127),(key[0],key[1],key[2],key[3]))
             pygame.draw.rect(DISPLAY,(0,0,0),(key[0],key[1],key[2],key[3]),5)
-            DISPLAY.blit(my_font.render(key[4], False, (0,0,0)),(key[0]+20,key[1]+20))
+            DISPLAY.blit(my_font.render(key[4], antialiasing, (0,0,0)),(key[0]+20,key[1]+20))
     pygame.draw.rect(DISPLAY, (0, 0, 0), (50,80,900,100), 5)
-    textfield_surface = my_font.render(tf, False, (0, 0, 0))
+    textfield_surface = my_font.render(tf, antialiasing, (0, 0, 0))
     DISPLAY.blit(textfield_surface,  (500-(textfield_surface.get_size()[0] / 2),100))
-    DISPLAY.blit(my_font.render(blinker, False, (0, 0, 0)),  (485+(textfield_surface.get_size()[0] / 2),100))
-    name_surface = my_font.render(keyboard_entry, False, (0, 0, 0))
+    DISPLAY.blit(my_font.render(blinker, antialiasing, (0, 0, 0)),  (485+(textfield_surface.get_size()[0] / 2),100))
+    name_surface = my_font.render(keyboard_entry, antialiasing, (0, 0, 0))
     DISPLAY.blit(name_surface,  (500-(name_surface.get_size()[0] / 2),10))
 
 
@@ -667,14 +747,14 @@ def draw_colorpicker():
         pygame.draw.rect(DISPLAY,(127,127,127),(406,500,212,75))
 
 
-    name_surface = my_font.render(tx[lan]["choosecolor"], False, (0, 0, 0))
+    name_surface = my_font.render(tx[lan]["choosecolor"], antialiasing, (0, 0, 0))
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 20))
 
-    name_surface = my_font_m.render(colorpicker_displaytext, False, colorpicker_currentcol)
+    name_surface = my_font_m.render(colorpicker_displaytext, antialiasing, colorpicker_currentcol)
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 170))
 
     pygame.draw.rect(DISPLAY, (0, 0, 0), (406,500,212,75), 5)
-    name_surface = my_font_m.render("OK", False, (0, 0, 0))
+    name_surface = my_font_m.render("OK", antialiasing, (0, 0, 0))
     DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), 537-name_surface.get_size()[1]/2))
 def colorpicker_highlight():
     global colorpicker_ok_hl
@@ -839,7 +919,7 @@ def buildmenus():
     menus[0].append(["button",-1,350,450,80,True,tx[lan]["createdb"],"medium",False])
     menus[0].append(["button",-1,250,450,80,True,tx[lan]["loaddb"],"medium",False])
     menus[0].append(["button",-1,450,450,80,True,tx[lan]["exitpr"],"medium",False])
-    menus[0].append(["button",920,20,80,50,False,tx[lan]["otherlang"],"medium",False])
+    menus[0].append(["button",920,20,80,50,False,"֎","medium",False])
 
     menus[1].append(["label",-1,0,-1,-1,True,tx[lan]["dbcreation"],"large",False])
     menus[1].append(["label",50,200,-1,-1,False,tx[lan]["dbname"],"medium",False])
@@ -913,13 +993,13 @@ def draw_menu(phase=0):
             if item[0] == "clabel":
                 color=item[9]
             if item[7] == "large":
-                name_surface = my_font.render(item[6], False, color )
+                name_surface = my_font.render(item[6], antialiasing, color )
             elif item[7] == "medium":
-                name_surface = my_font_m.render(item[6], False, color )
+                name_surface = my_font_m.render(item[6], antialiasing, color )
             elif item[7] == "small":
-                name_surface = my_font_s.render(item[6], False, color )
+                name_surface = my_font_s.render(item[6], antialiasing, color )
             elif item[7] == "tiny":
-                name_surface = my_font_xs.render(item[6], False, color )
+                name_surface = my_font_xs.render(item[6], antialiasing, color )
             if item[5] == True: # if centered
                 DISPLAY.blit(name_surface, (512 - (name_surface.get_size()[0] / 2), item[2]))
             else: # if not centered
@@ -930,13 +1010,13 @@ def draw_menu(phase=0):
             else:
                 label=str(globals()[item[6]])
             if item[7] == "large":
-                name_surface = my_font.render(label, False, (0, 0, 0))
+                name_surface = my_font.render(label, antialiasing, (0, 0, 0))
             elif item[7] == "medium":
-                name_surface = my_font_m.render(label, False, (0, 0, 0))
+                name_surface = my_font_m.render(label, antialiasing, (0, 0, 0))
             elif item[7] == "small":
-                name_surface = my_font_s.render(label, False, (0, 0, 0))
+                name_surface = my_font_s.render(label, antialiasing, (0, 0, 0))
             elif item[7] == "tiny":
-                name_surface = my_font_xs.render(label, False, (0, 0, 0))
+                name_surface = my_font_xs.render(label, antialiasing, (0, 0, 0))
             draw=True
             if item[0] == "button_context" and globals()[item[9]] == (not item[10]):
                 draw=False
@@ -992,10 +1072,7 @@ def menu_press():
         elif button is menus[0][2]:
             dblist_show()
         elif button is menus[0][4]:
-            if lan=="en":
-                lan="bg"
-            else:
-                lan="en"
+            settings()
             buildmenus()
         elif button is menus[1][2]:
             display_keyboard(tx[lan]["nameurdb"], "db_dbname", digital=False, switchable=True, begin_with_upper=False,fraction=True, default_text=db_dbname,okfunc='okfuncs(0)')
@@ -1112,19 +1189,19 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     value=str(value)
     if text=="__clock":
         if istoday:
-            name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+            name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), antialiasing, (0, 0, 0))
         else:
-            name_surface = my_font_m.render("e-00:"+str(round(editingtimer)), False, (128, 128, 128))
+            name_surface = my_font_m.render("e-00:"+str(round(editingtimer)), antialiasing, (128, 128, 128))
     elif text=="__date":
         if db["days"][currentday]["dt"] == datetime.datetime.today().day and db["days"][currentday]["mn"] == datetime.datetime.today().month and db["days"][currentday]["yr"] == datetime.datetime.today().year:
-            name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), False, (0, 0, 0))
+            name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][current_month-1] + " " + str(current_year), antialiasing, (0, 0, 0))
             istoday=True
         else:
-            name_surface = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), False, (128, 128, 128))
+            name_surface = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), antialiasing, (128, 128, 128))
             istoday=False
         widget_datesize = name_surface.get_size()[0]
     elif text == "__rem":
-        name_surface = my_font_xs.render(tx[lan]["reminders"], False, (0, 0, 0))
+        name_surface = my_font_xs.render(tx[lan]["reminders"], antialiasing, (0, 0, 0))
 
 
     if text=="__clock":
@@ -1140,10 +1217,10 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
         DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+5))
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
-        name_surfacea = my_font_s.render(text, False, color)
+        name_surfacea = my_font_s.render(text, antialiasing, color)
         widget_tempsizes[index][0]=name_surfacea.get_size()[0]
         DISPLAY.blit(name_surfacea, (placing_x - widget_tempsizes[index][0] / 2, placing_y))
-        name_surface = my_font_s.render(value, False, (0, 0, 0))
+        name_surface = my_font_s.render(value, antialiasing, (0, 0, 0))
         widget_tempsizes[index][1] = name_surface.get_size()[0]
 
         if style==0:
@@ -1158,20 +1235,20 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
             if widget_selected_actual==index and widget_selected_type=="int-":
                 pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 50, placing_y + 40))
+            DISPLAY.blit(my_font_m.render("-", antialiasing, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 50, placing_y + 40))
             if widget_selected_actual==index and widget_selected_type=="int+":
                 pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 30, placing_y + 40))
+            DISPLAY.blit(my_font_m.render("+", antialiasing, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 30, placing_y + 40))
         elif style==3:
             if widget_selected_actual==index and widget_selected_type=="int--":
                 pygame.draw.rect(DISPLAY, (127,127,127), (placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 44))
+            DISPLAY.blit(my_font_s.render("--", antialiasing, (0, 0, 0)), (placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 44))
             if widget_selected_actual==index and widget_selected_type=="int++":
                 pygame.draw.rect(DISPLAY, (127,127,127), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 28, placing_y + 44))
+            DISPLAY.blit(my_font_s.render("++", antialiasing, (0, 0, 0)), (placing_x + widget_tempsizes[index][1] / 2 + 28, placing_y + 44))
         elif style==4:
             if widget_selected_actual==index:
                 pygame.draw.rect(DISPLAY,(127,127,127), (placing_x - 20, placing_y+40, 40, 40))
@@ -1188,15 +1265,15 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
 
         if style == 4:
             if value=="True":
-                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
                 DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
         elif style == 5:
             if value=="True":
-                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
                 DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
         elif style == 6:
             if value=="True":
-                name_surface = my_font_m.render("√", False, (0, 0, 0))
+                name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
                 DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
         elif style!=1:
             DISPLAY.blit(name_surface, (placing_x - widget_tempsizes[index][1] / 2, placing_y + 45))
@@ -1354,27 +1431,27 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
     global widgets_visualize
     defvalue=str(defvalue)
     if text=="__clock":
-        name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), False, (0, 0, 0))
+        name_surface = my_font_m.render(datetime.datetime.now().strftime("%H:%M:%S"), antialiasing, (0, 0, 0))
     elif text=="__date":
-        name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][counter-1] + " " + str(current_year), False, (0, 0, 0))
+        name_surface = my_font_m.render(str(current_date) + " " + tx[lan]["months"][counter-1] + " " + str(current_year), antialiasing, (0, 0, 0))
         widget_datesize = name_surface.get_size()[0]
         if widgets_visualize:
-            DISPLAY.blit(my_font_s.render("↔", False, (230, 230, 230)), (placing_x -20, placing_y +42))
+            DISPLAY.blit(my_font_s.render("↔", antialiasing, (230, 230, 230)), (placing_x -20, placing_y +42))
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y+40, 40, 40), 5)
     elif text == "__rem":
-        name_surface = my_font_xs.render(tx[lan]["reminders"], False, (0, 0, 0))
+        name_surface = my_font_xs.render(tx[lan]["reminders"], antialiasing, (0, 0, 0))
     else:
         if widgets_visualize:
-            DISPLAY.blit(my_font_s.render("S", False, (230, 230, 230)), (placing_x -8, placing_y -36))
+            DISPLAY.blit(my_font_s.render("S", antialiasing, (230, 230, 230)), (placing_x -8, placing_y -36))
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x -20, placing_y-40, 40, 40), 5)
 
 
     if widgets_visualize:
         if widget_selected==index:
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x - 20, placing_y, 40, 40))
-            DISPLAY.blit(my_font_s.render("≡", False, (255, 255, 255)), (placing_x - 8, placing_y+2))
+            DISPLAY.blit(my_font_s.render("≡", antialiasing, (255, 255, 255)), (placing_x - 8, placing_y+2))
         else:
-            DISPLAY.blit(my_font_s.render("≡", False, (230, 230, 230)), (placing_x - 8, placing_y + 2))
+            DISPLAY.blit(my_font_s.render("≡", antialiasing, (230, 230, 230)), (placing_x - 8, placing_y + 2))
             pygame.draw.rect(DISPLAY, (230, 230, 230), (placing_x - 20, placing_y, 40, 40), 5)
     if text=="__clock":
         DISPLAY.blit(name_surface, (placing_x, placing_y))
@@ -1389,21 +1466,21 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
         DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+5))
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
-        name_surfacea = my_font_s.render(text, False, color)
+        name_surfacea = my_font_s.render(text, antialiasing, color)
         DISPLAY.blit(name_surfacea, (placing_x - name_surfacea.get_size()[0] / 2, placing_y))
-        name_surface = my_font_s.render(defvalue, False, (0, 0, 0))
+        name_surface = my_font_s.render(defvalue, antialiasing, (0, 0, 0))
         #if name_surface.get_size()[0] < 34:
         #    tempsize = 34
         #else:
         tempsize = name_surface.get_size()[0]
         if style == 4:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
             DISPLAY.blit(name_surface, (placing_x - 12, placing_y + 40))
         elif style == 5:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
             DISPLAY.blit(name_surface, (placing_x + name_surfacea.get_size()[0] / 2 + 16, placing_y - 5))
         elif style == 6:
-            name_surface = my_font_m.render("√", False, (0, 0, 0))
+            name_surface = my_font_m.render("√", antialiasing, (0, 0, 0))
             DISPLAY.blit(name_surface, (placing_x - name_surfacea.get_size()[0] / 2 -40, placing_y - 5))
         elif style!=1:
             DISPLAY.blit(name_surface, (placing_x - name_surface.get_size()[0] / 2, placing_y + 45))
@@ -1416,14 +1493,14 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
             pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, tempsize+40, 40),5)
         elif style==2:
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 60, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("-", False, (0, 0, 0)), (placing_x - tempsize / 2 - 50, placing_y + 40))
+            DISPLAY.blit(my_font_m.render("-", antialiasing, (0, 0, 0)), (placing_x - tempsize / 2 - 50, placing_y + 40))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 40, 40), 5)
-            DISPLAY.blit(my_font_m.render("+", False, (0, 0, 0)), (placing_x + tempsize / 2 + 30, placing_y + 40))
+            DISPLAY.blit(my_font_m.render("+", antialiasing, (0, 0, 0)), (placing_x + tempsize / 2 + 30, placing_y + 40))
         elif style==3:
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - tempsize / 2 - 70, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("--", False, (0, 0, 0)), (placing_x - tempsize / 2 - 60, placing_y + 44))
+            DISPLAY.blit(my_font_s.render("--", antialiasing, (0, 0, 0)), (placing_x - tempsize / 2 - 60, placing_y + 44))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x + tempsize / 2 + 20, placing_y + 40, 50, 40), 5)
-            DISPLAY.blit(my_font_s.render("++", False, (0, 0, 0)), (placing_x + tempsize / 2 + 28, placing_y + 44))
+            DISPLAY.blit(my_font_s.render("++", antialiasing, (0, 0, 0)), (placing_x + tempsize / 2 + 28, placing_y + 44))
         elif style==4:
             pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - 20, placing_y+40, 40, 40),5)
         elif style==5:
@@ -1472,23 +1549,23 @@ def draw_calendar():
             if index==currentday:
                 pygame.draw.rect(DISPLAY, (199, 199, 199), (key[0], ypos , key[2], key[3]))
             pygame.draw.rect(DISPLAY, (0, 0, 0), (key[0], ypos , key[2], key[3]), 5)
-            DISPLAY.blit(my_font_s.render(str(key[4]), False, (0, 0, 0)), (key[0] + 10, ypos + 10))
+            DISPLAY.blit(my_font_s.render(str(key[4]), antialiasing, (0, 0, 0)), (key[0] + 10, ypos + 10))
     pygame.draw.rect(DISPLAY, (200, 0, 0), (calendar_redbit[0],calendar_redbit[1], 80,80), 5)
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,0,563,80))
     pygame.draw.rect(DISPLAY, (255, 255, 255), (0,520,563,80))
-    DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], False, (0, 0, 0)), (420, 20))
-    dayshowing = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), False, (0, 0, 0))
+    DISPLAY.blit(my_font_s.render(tx[lan]["months"][calendar_scrolledmonth-1], antialiasing, (0, 0, 0)), (420, 20))
+    dayshowing = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), antialiasing, (0, 0, 0))
     DISPLAY.blit(dayshowing,(792-dayshowing.get_size()[0]/2,0))
     y=60
     for index,item in enumerate(db["intnames"]):
-        displaying=my_font_s.render(item + " = " + str(db["days"][currentday]["ints"][index]), False, (db["intcols"][index][0],db["intcols"][index][1],db["intcols"][index][2]))
+        displaying=my_font_s.render(item + " = " + str(db["days"][currentday]["ints"][index]), antialiasing, (db["intcols"][index][0],db["intcols"][index][1],db["intcols"][index][2]))
         DISPLAY.blit(displaying,(670,y))
         y+=30
     for index,item in enumerate(db["boolnames"]):
         if db["days"][currentday]["bools"][index] == True:
-            displaying=my_font_s.render(item + " = "+tx[lan]["yes"], False, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
+            displaying=my_font_s.render(item + " = "+tx[lan]["yes"], antialiasing, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
         else:
-            displaying=my_font_s.render(item + " = "+tx[lan]["no"], False, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
+            displaying=my_font_s.render(item + " = "+tx[lan]["no"], antialiasing, (db["boolcols"][index][0],db["boolcols"][index][1],db["boolcols"][index][2]))
         DISPLAY.blit(displaying,(670,y))
         y+=30
 #endregion
