@@ -8,7 +8,7 @@ else:
     print("Enter name of file (without png extension): ",end="")
     name = input()
     try:
-        im = Image.open(name+'.png') # Can be many different formats.
+        im = Image.open(name+'.png')
         pix = im.load()
     except:
         print("ERROR: Couldn't load file!")
@@ -38,7 +38,7 @@ else:
             else:
                 raise Exception("")
         except:
-            print("Couldn't copy to clipboard!") # Get the RGBA Value of the a pixel of an image
+            print("Couldn't copy to clipboard!")
 
 
 #######DECODING FUNCTION AND EXAMPLE CODE FOR PYGAME########
