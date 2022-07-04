@@ -97,7 +97,7 @@ import datetime
 import os
 from sys import exit as terminate_program
 pygame.init()
-DISPLAY = pygame.display.set_mode((1024,600),0,32)
+DISPLAY = pygame.display.set_mode((1024,600),pygame.RESIZABLE,32)
 WHITE = (255,255,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
 db={}
@@ -105,6 +105,7 @@ current_wkday = datetime.datetime.today().weekday()
 current_month = datetime.datetime.today().month
 current_date = datetime.datetime.today().day
 current_year = datetime.datetime.today().year
+hasset = False
 #endregion
 ###########MESSAGE ENGINE INITIALIZE####################
 #region
@@ -168,11 +169,55 @@ def message_press():
         message_ok_hl = False
         message_to_show = "Error"
         message_show = False
-    if msg_okfunc!="":
-        exec(msg_okfunc,globals())
-        msg_okfunc=""
+        if msg_okfunc!="":
+            exec(msg_okfunc,globals())
+            msg_okfunc=""
 #endregion
+
 run=True
+def draw_flag(x,y,country):
+    if country=="gb":
+        red = (200,16,46)
+        blue = (1,33,105)
+        pygame.draw.polygon(DISPLAY,red,[(x,y), (x+79,y+53), (x+60,y+53),(x,y+12)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+30,y), (x+93,y+43), (x+93,y)])
+        pygame.draw.polygon(DISPLAY,blue,[(x,y+19), (x,y+53), (x+50,y+53)])
+
+        pygame.draw.rect(DISPLAY,red,(x+104,y,31,159))
+        pygame.draw.rect(DISPLAY,red,(x,y+64,239,31))
+
+        pygame.draw.polygon(DISPLAY,red,[(x+220,y), (x+146,y+50),(x+146,y+53),(x+159,y+53),(x+239,y)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+146,y), (x+146,y+43), (x+210,y)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+239,y+19), (x+189,y+53), (x+239,y+53)])
+
+        pygame.draw.polygon(DISPLAY,red,[(x+80,y+106), (x+93,y+106), (x+93,y+109),(x+19,y+159),(x,y+159)])
+        pygame.draw.polygon(DISPLAY,blue,[(x,y+106), (x+50,y+106), (x,y+140)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+30,y+159), (x+93,y+159), (x+93,y+116)])
+
+        pygame.draw.polygon(DISPLAY,red,[(x+160,y+106), (x+179,y+106), (x+239,y+147),(x+239,y+159)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+189,y+106), (x+239,y+106), (x+239,y+140)])
+        pygame.draw.polygon(DISPLAY,blue,[(x+146,y+116), (x+146,y+159), (x+210,y+159)])
+    elif country=="bg":
+        white = (255,255,255)
+        green = (0,150,110)
+        red = (214,38,18)
+        pygame.draw.rect(DISPLAY,white,(x,y,239,53))
+        pygame.draw.rect(DISPLAY,green,(x,y+53,239,53))
+        pygame.draw.rect(DISPLAY,red,(x,y+106,239,53))
+    pygame.draw.rect(DISPLAY,(0,0,0),(x,y,240,160),5)
+while not hasset:
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                lan = "en"
+                hasset = True
+            elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
+                lan = "bg"
+                hasset = True
+    DISPLAY.fill(WHITE)
+    draw_flag(200,220,"gb")
+    draw_flag(600,220,"bg")
+    pygame.display.update()
 def download_font():
     global run
     global my_font
@@ -183,7 +228,9 @@ def download_font():
         import requests
     except ModuleNotFoundError:
         run=False
-        display_message("\"requests\" module not found!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
+        text = {"en": "\"requests\" module not found!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                "bg": "Нямате \"requests\" модулът!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+        display_message(text[lan])
     else:
         try:
             URL = "https://github.com/hellgames1/life-manager/raw/main/calibri.ttf"
@@ -191,28 +238,38 @@ def download_font():
             response.raise_for_status()
         except requests.exceptions.HTTPError:
             run=False
-            display_message("HTTP Error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
+            text = {"en": "HTTP Error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                    "bg": "HTTP Грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+            display_message(text[lan])
         except requests.exceptions.ConnectionError:
             run=False
-            display_message("Connection error!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+            text = {"en": "Connection error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                    "bg": "Грешка с връзката!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+            display_message(text[lan])
         except requests.exceptions.Timeout:
             run=False
-            display_message("Error - timeout!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+            text = {"en": "Error - timeout!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                    "bg": "Грешка - таймаут!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+            display_message(text[lan])
         except requests.exceptions.RequestException:
             run=False
-            display_message("Weird error!@Please download \"calibri.ttf\"@manually and place@it in the directory below!")
+            text = {"en": "Weird error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                    "bg": "Странна грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+            display_message(text[lan])
         else:
             try:
                 open("calibri.ttf", "wb").write(response.content)
             except:
                 run=False
-                display_message("Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!")
+                text = {"en": "Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                        "bg": "Грешка при записване на файла!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+                display_message(text[lan])
             else:
                 my_font = pygame.font.Font("calibri.ttf", 72)
                 my_font_m = pygame.font.Font("calibri.ttf", 48)
                 my_font_s = pygame.font.Font("calibri.ttf", 36)
                 my_font_xs = pygame.font.Font("calibri.ttf", 24)
-                display_message("Success!")
+                display_message({"en":"Success!","bg":"Успешно!"}[lan])
 
 ############KEYBOARD INITIALIZE#########################
 #region
@@ -227,7 +284,9 @@ except FileNotFoundError:
     my_font_m = pygame.font.SysFont("Calibri", 48)
     my_font_s = pygame.font.SysFont("Calibri", 36)
     my_font_xs = pygame.font.SysFont("Calibri", 24)
-    display_message("\"calibri.ttf\" font file not found!@Attempting to download from@hellgames1 github...","download_font()")
+    text = {"en": "\"calibri.ttf\" font file not found!@Attempting to download from@hellgames1 github...",
+            "bg": "\"calibri.ttf\" файлът не е открит!@Ще се опитам да го изтегля от@hellgames1 github..."}
+    display_message(text[lan],"download_font()")
     #display_message("\"calibri.ttf\" font file not found!@Please place the file in the@program's directory below!")
 
 lower = False
@@ -1005,6 +1064,7 @@ def menu_press():
                 db_bools.pop(i-13)
 #endregion
 #############EDITOR############################
+#region
 widgets=[]
 widget_selected = -1
 widget_selected_actual = -1
@@ -1370,6 +1430,7 @@ def draw_ewidget(placing_x,placing_y,text,index,style,color,defvalue=0):
             pygame.draw.rect(DISPLAY, (0,0,0), (placing_x + name_surfacea.get_size()[0] / 2 + 8 , placing_y-5, 40, 40),5)
         elif style==6:
             pygame.draw.rect(DISPLAY, (0,0,0), (placing_x - name_surfacea.get_size()[0] / 2 - 48 , placing_y-5, 40, 40),5)
+#endregion
 ###############CALENDAR
 #region
 calendar_shown = False
@@ -1431,6 +1492,7 @@ def draw_calendar():
         DISPLAY.blit(displaying,(670,y))
         y+=30
 #endregion
+
 counter = 1
 print("Beginning main loop...")
 while True:
@@ -1546,4 +1608,5 @@ while True:
     pygame.draw.rect(DISPLAY, (255, 0, 0), (0,600,2500,1900))
             #print(db_nums)
     pygame.display.update()
+    #print(pygame.display.get_surface().get_size())
     #endregion
