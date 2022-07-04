@@ -95,6 +95,7 @@ import pygame
 import json
 import datetime
 import os
+import hashlib
 from sys import exit as terminate_program
 pygame.init()
 DISPLAY = pygame.display.set_mode((1024,600),pygame.RESIZABLE,32)
@@ -108,6 +109,13 @@ current_year = datetime.datetime.today().year
 antialiasing = False
 hasset = False
 #endregion
+
+def check_md5(file_name):
+    original_md5 = '3dea6da513097358f7fbb4408aacb736'
+    with open(file_name, 'rb') as file_to_check:
+        data = file_to_check.read()
+        md5_returned = hashlib.md5(data).hexdigest()
+    return original_md5 == md5_returned
 
 ###########IMAGE ENGINE INITIALIZE#####################
 #region
@@ -337,56 +345,67 @@ def download_font():
     global my_font_s
     global my_font_xs
     try:
-        import requests
-    except ModuleNotFoundError:
+        URL = "https://github.com/hellgames1/life-manager/raw/main/calibri.ttf"
+        response = requests.get(URL,timeout=3)
+        response.raise_for_status()
+    except requests.exceptions.HTTPError:
         run=False
-        text = {"en": "\"requests\" module not found!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                "bg": "Нямате \"requests\" модулът!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+        text = {"en": "HTTP Error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                "bg": "HTTP Грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+        display_message(text[lan])
+    except requests.exceptions.ConnectionError:
+        run=False
+        text = {"en": "Connection error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                "bg": "Грешка с връзката!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+        display_message(text[lan])
+    except requests.exceptions.Timeout:
+        run=False
+        text = {"en": "Error - timeout!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                "bg": "Грешка - таймаут!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+        display_message(text[lan])
+    except requests.exceptions.RequestException:
+        run=False
+        text = {"en": "Weird error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                "bg": "Странна грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
         display_message(text[lan])
     else:
         try:
-            URL = "https://github.com/hellgames1/life-manager/raw/main/calibri.ttf"
-            response = requests.get(URL,timeout=3)
-            response.raise_for_status()
-        except requests.exceptions.HTTPError:
+            open("calibri.ttf", "wb").write(response.content)
+        except:
             run=False
-            text = {"en": "HTTP Error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                    "bg": "HTTP Грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
-            display_message(text[lan])
-        except requests.exceptions.ConnectionError:
-            run=False
-            text = {"en": "Connection error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                    "bg": "Грешка с връзката!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
-            display_message(text[lan])
-        except requests.exceptions.Timeout:
-            run=False
-            text = {"en": "Error - timeout!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                    "bg": "Грешка - таймаут!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
-            display_message(text[lan])
-        except requests.exceptions.RequestException:
-            run=False
-            text = {"en": "Weird error!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                    "bg": "Странна грешка!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+            text = {"en": "Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                    "bg": "Грешка при записване на файла!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
             display_message(text[lan])
         else:
-            try:
-                open("calibri.ttf", "wb").write(response.content)
-            except:
-                run=False
-                text = {"en": "Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
-                        "bg": "Грешка при записване на файла!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
-                display_message(text[lan])
-            else:
+            if os.path.exists("calibri.ttf") and check_md5("calibri.ttf")==True:
                 my_font = pygame.font.Font("calibri.ttf", 72)
                 my_font_m = pygame.font.Font("calibri.ttf", 48)
                 my_font_s = pygame.font.Font("calibri.ttf", 36)
                 my_font_xs = pygame.font.Font("calibri.ttf", 24)
                 display_message({"en":"Success!","bg":"Успешно!"}[lan])
+            else:
+                os.remove("calibri.ttf")
+                run=False
+                text = {"en": "Error saving file!@Please download \"calibri.ttf\"@manually and place it@in the directory below!",
+                        "bg": "Грешка при записване на файла!@Моля изтеглете \"calibri.ttf\"@ръчно и го поставете@в директорията отдолу!"}
+                display_message(text[lan])
+
+def open_browser():
+    try:
+        import webbrowser
+        webbrowser.open('https://github.com/hellgames1/life-manager/blob/main/calibri.ttf', new=2)
+    except:
+        pass
 #endregion
 
 ############KEYBOARD INITIALIZE#########################
 #region
 print("Initializing keyboard...")
+specificmessage = ["found","открит"]
+if os.path.exists("calibri.ttf"):
+    if check_md5("calibri.ttf") == False:
+        os.remove("calibri.ttf")
+        specificmessage = ["correct","правилния"]
 try:
     my_font = pygame.font.Font("calibri.ttf", 72)
     my_font_m = pygame.font.Font("calibri.ttf", 48)
@@ -397,11 +416,18 @@ except FileNotFoundError:
     my_font_m = pygame.font.SysFont("Calibri", 48)
     my_font_s = pygame.font.SysFont("Calibri", 36)
     my_font_xs = pygame.font.SysFont("Calibri", 24)
-    text = {"en": "\"calibri.ttf\" font file not found!@Attempting to download from@hellgames1 github...",
-            "bg": "\"calibri.ttf\" файлът не е открит!@Ще се опитам да го изтегля от@hellgames1 github..."}
-    display_message(text[lan],"download_font()")
+    try:
+        import requests
+    except ModuleNotFoundError:
+        run=False
+        text = {"en": "\"calibri.ttf\" font file not "+specificmessage[0]+"!@Please download \"calibri.ttf\"@and place it in the@directory below!",
+                "bg": "\"calibri.ttf\" файлът за шрифта@не е "+specificmessage[1]+"! Моля изтеглете@го и го поставете в@директорията отдолу!"}
+        display_message(text[lan],"open_browser()")
+    else:
+        text = {"en": "\"calibri.ttf\" font file not "+specificmessage[0]+"!@Attempting to download from@hellgames1 github...",
+                "bg": "\"calibri.ttf\" файлът за шрифта@не е "+specificmessage[1]+"!@Ще се опитам да го изтегля от@hellgames1 github..."}
+        display_message(text[lan],"download_font()")
     #display_message("\"calibri.ttf\" font file not found!@Please place the file in the@program's directory below!")
-
 lower = False
 keys = []
 special_keys = []
