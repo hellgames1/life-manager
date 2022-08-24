@@ -102,6 +102,7 @@ import datetime
 import os
 import hashlib
 pygame.init()
+pygame.display.set_caption('Life Manager by hellgames1')
 DISPLAY = pygame.Surface((1024,600))
 DISPLAYFINAL = pygame.display.set_mode((1024,600),pygame.RESIZABLE,32)
 WHITE = (255,255,255)
