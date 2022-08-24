@@ -4,6 +4,7 @@
 - Tracks up to 9 numbers and up to 9 checks every day, all customizable (e.g. weight, money spent, exercise completed, hygiene-related things, etc)
 - The interface is also customizable, with customizable widgets, colors, method of editing each value.
 - Has a calendar where you can see stats for and edit each day.
+- You can set reminders for each day and see reminders from previous days
 - You can have multiple databases.
 - The interface is available in both English and Bulgarian
 - The entire program is just one Python script
@@ -42,6 +43,7 @@ You can skip steps 6 - 9 by just installing the requests library, then the progr
 - Следи до 9 числени стойности и до 9 отметки всеки ден, всичките персонализирани (примерно тегло, похарчени пари, направени упражнения, неща свързани с хигиена, т.н.)
 - Интефейса също може да се персонализира, с персонализирани widget-и, цветове, методи за промяна на всяка стойност.
 - Има календар, където можеш да видиш статистика за всеки ден и да го редактираш.
+- Можеш да пишеш бележки за всеки ден и да виждаш бележките от изминали дни
 - Може да имаш няколко бази данни.
 - Интерфейсът е наличен на български и на английски
 - Цялата програма е във един Python скрипт
