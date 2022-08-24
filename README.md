@@ -16,8 +16,7 @@ Tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 
 **Important!**
 - While the program can run under any common environment, it's designed for **touchscreen devices with 1024x600 resolution**.
-- Specifically - cheap 7" Android tablet (the ones that go for $50). A Raspberry Pi with 1024x600 touch display will also work.
-- It's designed to run continiously and have a device dedicated to it entirely.
+- Specifically - cheap 7" Android tablet (the ones that go for $50). A Raspberry Pi with a touch display will also work.
 - You can run the program under other resolutions with a choice of how to scale it to your display.
 - The program requires the Calibri font (**calibri.ttf**) in the same directory, which it will download automatically if you have Internet connection and the requests module.
 - You can set the program to load a database automatically by typing the command setauto in the "Reminders" field. Type stopauto if you want to disable it.
@@ -40,25 +39,24 @@ You can skip steps 6 - 9 by just installing the requests library, then the progr
 
 ------------
 
-**Софтуер, който ти следи ежедневните навици, помага да постигнеш цели, правиш бележки, и като цяло ти организира живота.**
+**Софтуер, който Ви следи ежедневните навици, помага да постигнете цели, правите бележки, и като цяло Ви организира живота.**
 - Следи до 9 числени стойности и до 9 отметки всеки ден, всичките персонализирани (примерно тегло, похарчени пари, направени упражнения, неща свързани с хигиена, т.н.)
 - Интефейса също може да се персонализира, с персонализирани widget-и, цветове, методи за промяна на всяка стойност.
-- Има календар, където можеш да видиш статистика за всеки ден и да го редактираш.
-- Можеш да пишеш бележки за всеки ден и да виждаш бележките от изминали дни
-- Може да имаш няколко бази данни.
+- Има календар, където можете да видите статистика за всеки ден и да го редактирате.
+- Можете да пишете бележки за всеки ден и да виждате бележките от изминали дни
+- Може да имате няколко бази данни.
 - Интерфейсът е наличен на български и на английски
 - Цялата програма е във един Python скрипт
 - (ВПО) Може да показва диаграми и визуализации на тендециите в период от време
-- (ВПО) Може да добавяш нови елементи и да променяш стила на вече създадени бази данни
+- (ВПО) Може да добавяте нови елементи и да променяте стила на вече създадени бази данни
 
 **Нужни модули: pygame  
 Тествано под pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 
 **Важно!**
 - Програмата може да работи под всякакви често срещани работни среди, но е създадена за **тъчскрийн устройства с 1024х600 резолюция**.
-- По-точно - евтини 7" Андроид таблети (тези под 100лв). Raspberry Pi със 1024х600 тъч дисплей също работи.
-- Направена е да работи продължително и цялото устройство да е отдадено на това приложение.
-- Може да пуснеш програмата под други резолюции и да избереш как да бъде оразмерена.
+- По-точно - евтини 7" Андроид таблети (тези под 100лв). Raspberry Pi със тъч дисплей също работи.
+- Можете да пуснете програмата под други резолюции и да изберете как да бъде оразмерена.
 - Програмата изисква шрифтът Calibri (**calibri.ttf**) в същата директория. Ще бъде изтеглен автоматично ако имате интернет и модулът requests
 - Можете да зададете на програмата автоматично да отваря база данни като напишете командата setauto в полето Бележки. Напишете stopauto за да спрете тази функция.
 
