@@ -19,6 +19,19 @@ Tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 - You can run the program under other resolutions with a choice of how to scale it to your display.
 - The program requires the Calibri font (**calibri.ttf**) in the same directory, which it will download automatically if you have Internet connection and the requests module.
 
+**How to run on Android:**
+1. Download Pydroid 3 from Google Play Store
+2. Go to PIP in the menu and install the pygame library
+3. Open main.py file in the repository and copy the entire contents
+4. Paste it into the Pydroid IDE
+5. Run the program, choose language and anti-aliasing options
+6. You will see the directory where you should place the font file,
+7. Press OK to go to the download page
+8. Download the font file (calibri.ttf) from the repository and place it in the directory
+9. Run the program again
+
+You can skip steps 6 - 9 by just installing the requests library, then the program will download the font file automatically.
+
 ------------
 български
 
@@ -42,3 +55,16 @@ Tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 - Направена е да работи продължително и цялото устройство да е отдадено на това приложение.
 - Може да пуснеш програмата под други резолюции и да избереш как да бъде оразмерена.
 - Програмата изисква шрифтът Calibri (**calibri.ttf**) в същата директория. Ще бъде изтеглен автоматично ако имате интернет и модулът requests
+
+**Как да пуснете от Android:**
+1. Изтеглете Pydroid 3 от Google Play Store
+2. Отворете PIP в менюто и инсталирайте pygame библиотеката
+3. Отворете main.py файлът в GitHub и копирайте цялото съдържание
+4. Поставете го в Pydroid IDE
+5. Пуснете програмата, изберете настройки за език и за изглаждане
+6. Ще видите директорията, в която трябва да поставите файлът за шрифта
+7. Натиснете ОК и ще бъдете пренасочени към страницата за изтегляне
+8. Изтеглете файлът за шрифта (calibri.ttf) от страницата и го поставете в директорията
+9. Пуснете програмата отново
+
+Може да пропуснете стъпки 6 - 9 ако просто инсталирате библиотеката requests, тогава програмата сама ще изтегли файла.
