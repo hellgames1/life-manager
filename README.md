@@ -5,7 +5,7 @@
 - The interface is also customizable, with customizable widgets, colors, method of editing each value.
 - Has a calendar where you can see stats for and edit each day.
 - You can set reminders for each day and see reminders from previous days
-- You can have multiple databases.
+- You can have multiple databases
 - The interface is available in both English and Bulgarian
 - The entire program is just one Python script
 - (WIP) Can show charts and visualizations of the trends throughout a period of time
@@ -20,6 +20,7 @@ Tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 - It's designed to run continiously and have a device dedicated to it entirely.
 - You can run the program under other resolutions with a choice of how to scale it to your display.
 - The program requires the Calibri font (**calibri.ttf**) in the same directory, which it will download automatically if you have Internet connection and the requests module.
+- You can set the program to load a database automatically by typing the command setauto in the "Reminders" field. Type stopauto if you want to disable it.
 
 **How to run on Android:**
 1. Download Pydroid 3 from Google Play Store
@@ -59,6 +60,7 @@ You can skip steps 6 - 9 by just installing the requests library, then the progr
 - Направена е да работи продължително и цялото устройство да е отдадено на това приложение.
 - Може да пуснеш програмата под други резолюции и да избереш как да бъде оразмерена.
 - Програмата изисква шрифтът Calibri (**calibri.ttf**) в същата директория. Ще бъде изтеглен автоматично ако имате интернет и модулът requests
+- Можете да зададете на програмата автоматично да отваря база данни като напишете командата setauto в полето Бележки. Напишете stopauto за да спрете тази функция.
 
 **Как да пуснете от Android:**
 1. Изтеглете Pydroid 3 от Google Play Store
