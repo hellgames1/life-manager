@@ -37,6 +37,7 @@ tx = {
         "show": "Show",
         "hide": "Hide",
         "reminders": "Reminders:",
+        "reminderfor": "Reminder for",
         "refresh": "refresh",
         "no": "no",
         "yes": "yes",
@@ -80,6 +81,7 @@ tx = {
         "show": "Покажи",
         "hide": "Скрий",
         "reminders": "Бележки:",
+        "reminderfor": "Бележка за",
         "refresh": "опресни",
         "no": "не",
         "yes": "да",
@@ -115,6 +117,9 @@ current_year = datetime.datetime.today().year
 antialiasing = False
 hasset = False
 fs_scaletype = 3
+temp_rem = ""
+line_one = []
+line_two = []
 #endregion
 
 def check_md5(file_name):
@@ -590,6 +595,7 @@ digit_special_keys.append([550,500,100,100,".",False])
 def okfuncs(which,misc=-1):
     global db_editingcol
     global widget_editingpart
+    global temp_rem
     if which==0:
         global db_dbname
         db_dbname = db_dbname.replace(" ", "_")
@@ -641,6 +647,10 @@ def okfuncs(which,misc=-1):
         if widget_editingpart == int(widget_editingpart):
             widget_editingpart = int(widget_editingpart)
         newdb["days"][currentday]["ints"][misc] = widget_editingpart
+        updatedb(newdb)
+    if which==8:
+        newdb = db.copy()
+        newdb["days"][currentday]["reminders"] = temp_rem
         updatedb(newdb)
 def hide_keyboard():
     global keyboard_shown
@@ -1031,7 +1041,7 @@ def createdb():
     for item in widgets:
         db["positionstyles"].append([item[2],item[3],item[1]])
     db["days"]=[]
-    day = {"wkd": -1, "dt": -1, "mn": -1, "yr": -1, "wksince": -1, "reminders": [], "ints": [], "bools": []}
+    day = {"wkd": -1, "dt": -1, "mn": -1, "yr": -1, "wksince": -1, "reminders": "", "ints": [], "bools": []}
     day["ints"]=db["intdefs"]
     day["bools"]=db["booldefs"]
     wkday = datetime.datetime.today().weekday()
@@ -1358,10 +1368,13 @@ def load_widgets():
     global currentday
     global widget_tempsizes
     global boolstart
+    global temp_rem
+    global line_one
+    global line_two
     widget_alignments = db["datealignment"]
     widgets=[["__clock",0,db["positionstyles"][0][0],db["positionstyles"][0][1],(0,0,0),-1]]
     widgets.append(["__date",0,db["positionstyles"][1][0],db["positionstyles"][1][1],(0,0,0),-1])
-    widgets.append(["__rem",0,db["positionstyles"][2][0],db["positionstyles"][2][1],(0,0,0),-1])
+    widgets.append(["__rem",-12,db["positionstyles"][2][0],db["positionstyles"][2][1],(0,0,0),-1])
     widget_tempsizes = [[0,0],[0,0],[0,0]]
     for index,item in enumerate(db["days"][currentday]["ints"]):
         widgets.append([db["intnames"][index],
@@ -1374,6 +1387,31 @@ def load_widgets():
                         db["positionstyles"][index+boolstart][2],db["positionstyles"][index+boolstart][0],
                         db["positionstyles"][index+boolstart][1],db["boolcols"][index],item])
         widget_tempsizes.append([0,0])
+    temp_rem = db["days"][currentday]["reminders"]
+    line_one = []
+    line_two = []
+    rem_split = temp_rem.split()
+    do_one = True
+    ind = -1
+    while True:
+        try:
+            ind += 1
+            if do_one:
+                line_one.append(rem_split[ind])
+                if my_font_s.render(" ".join(line_one), False, (0, 0, 0)).get_size()[0] > 360:
+                    line_one.pop(len(line_one) - 1)
+                    ind -= 1
+                    do_one = False
+            else:
+                line_two.append(rem_split[ind])
+                if my_font_s.render(" ".join(line_two), False, (0, 0, 0)).get_size()[0] > 360:
+                    line_two.pop(len(line_two) - 1)
+                    break
+        except IndexError:
+            break
+    line_one = " ".join(line_one)
+    line_two = " ".join(line_two)
+    print(widgets)
 
 def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     global widget_selected
@@ -1382,6 +1420,8 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
     global widget_tempsizes
     global istoday
     global editingtimer
+    global line_one
+    global line_two
     value=str(value)
     if text=="__clock":
         if istoday:
@@ -1411,6 +1451,10 @@ def draw_awidget(placing_x,placing_y,text,index,style,color,value=-1):
             DISPLAY.blit(name_surface, (placing_x-widget_datesize, placing_y))
     elif text=="__rem":
         DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+5))
+        name_surface = my_font_s.render(line_one, antialiasing, (0, 0, 0))
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+30))
+        name_surface = my_font_s.render(line_two, antialiasing, (0, 0, 0))
+        DISPLAY.blit(name_surface, (placing_x-name_surface.get_size()[0]/2, placing_y+60))
         pygame.draw.rect(DISPLAY, (0, 0, 0), (placing_x - 178, placing_y+2, 360, 116), 5)
     else:
         name_surfacea = my_font_s.render(text, antialiasing, color)
@@ -1541,12 +1585,19 @@ def highlight_awidget(placing_x,placing_y,index,style):
                 widget_selected_actual=index
                 widget_selected_type="bool"
                 print("bool int number "+str(index-boolstart))
+        elif style==-12:
+            if pygame.Rect(placing_x - 178, placing_y + 2, 360, 116).collidepoint(smart_get_pos()):
+                print("pressed on reminders")
+                widget_selected = 999
+                widget_selected_type="rem"
 
 def press_awidget():
     global widget_selected
     global widget_selected_actual
     global widget_selected_type
     global currentday
+    global temp_rem
+    global istoday
     if widget_selected!=-1:
         if widget_selected_type=="bool":
             newdb = db.copy()
@@ -1566,6 +1617,12 @@ def press_awidget():
             display_keyboard(db["intnames"][widget_selected]+" = "+str(db["days"][currentday]["ints"][widget_selected])+" + ?","widget_editingpart",True,False,False,True,"okfuncs(6,"+str(widget_selected)+")","",False)
         elif widget_selected_type=="int":
             display_keyboard(db["intnames"][widget_selected]+" = ?","widget_editingpart",True,False,False,True,"okfuncs(7,"+str(widget_selected)+")","",False)
+        elif widget_selected_type=="rem":
+            if istoday:
+                display_keyboard(tx[lan]["reminderfor"]+" " + str(current_date) + " " + tx[lan]["months"][current_month-1], "temp_rem", digital=False, switchable=True, begin_with_upper=False,fraction=True, okfunc="okfuncs(8)", default_text=temp_rem, multilingual=True)
+            else:
+                display_keyboard(tx[lan]["reminderfor"]+" " + str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1], "temp_rem", digital=False, switchable=True, begin_with_upper=False,fraction=True, okfunc="okfuncs(8)", default_text=temp_rem, multilingual=True)
+
         widget_selected=-1
         widget_selected_actual=-1
 def generate_widgets():
@@ -1753,6 +1810,17 @@ def draw_calendar():
     dayshowing = my_font_m.render(str(db["days"][currentday]["dt"]) + " " + tx[lan]["months"][db["days"][currentday]["mn"]-1] + " " + str(db["days"][currentday]["yr"]), antialiasing, (0, 0, 0))
     DISPLAY.blit(dayshowing,(792-dayshowing.get_size()[0]/2,0))
     y=60
+    if line_one != "":
+        displaying=my_font_s.render(tx[lan]["reminders"], antialiasing, (0,0,0))
+        DISPLAY.blit(displaying,(670,y))
+        y+=30
+        displaying=my_font_s.render(line_one, antialiasing, (0,0,0))
+        DISPLAY.blit(displaying,(670,y))
+        y+=30
+    if line_two != "":
+        displaying=my_font_s.render(line_two, antialiasing, (0,0,0))
+        DISPLAY.blit(displaying,(670,120))
+        y+=30
     for index,item in enumerate(db["intnames"]):
         displaying=my_font_s.render(item + " = " + str(db["days"][currentday]["ints"][index]), antialiasing, (db["intcols"][index][0],db["intcols"][index][1],db["intcols"][index][2]))
         DISPLAY.blit(displaying,(670,y))
@@ -1844,6 +1912,7 @@ while True:
             elif editingtimer==0 and not istoday:
                 loaddb(db_dbname,True)
                 draw_calendar()
+                draw_awidget(-1,-1,"__date",-1,-1,-1)
             counter+=1
             if counter==13:
                 counter=1
