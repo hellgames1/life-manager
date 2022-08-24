@@ -6,6 +6,7 @@
 - Has a calendar where you can see stats for and edit each day.
 - You can have multiple databases.
 - The interface is available in both English and Bulgarian
+- The entire program is just one python script
 - (WIP) Can show charts and visualizations of the trends throughout a period of time
 - (WIP) Can add new elements and edit the style of already created databases
 
@@ -43,6 +44,7 @@ You can skip steps 6 - 9 by just installing the requests library, then the progr
 - Има календар, където можеш да видиш статистика за всеки ден и да го редактираш.
 - Може да имаш няколко бази данни.
 - Интерфейсът е наличен на български и на английски
+- Цялата програма е във един Python скрипт
 - (ВПО) Може да показва диаграми и визуализации на тендециите в период от време
 - (ВПО) Може да добавяш нови елементи и да променяш стила на вече създадени бази данни
 
