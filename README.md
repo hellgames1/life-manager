@@ -6,7 +6,7 @@
 - Has a calendar where you can see stats for and edit each day.
 - You can have multiple databases.
 - The interface is available in both English and Bulgarian
-- The entire program is just one python script
+- The entire program is just one Python script
 - (WIP) Can show charts and visualizations of the trends throughout a period of time
 - (WIP) Can add new elements and edit the style of already created databases
 
