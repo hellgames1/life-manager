@@ -91,14 +91,19 @@ lan = "en"
 ############IMPORT AND MAIN SETTINGS####################
 #region
 print("Importing libraries...")
-import pygame
+from sys import exit as terminate_program
+try:
+    import pygame
+except:
+    print("!!!!!!!!!!!!!!!\nYou need pygame module! This application is tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)\n!!!!!!!!!!!!!!!")
+    terminate_program()
 import json
 import datetime
 import os
 import hashlib
-from sys import exit as terminate_program
 pygame.init()
-DISPLAY = pygame.display.set_mode((1024,600),pygame.RESIZABLE,32)
+DISPLAY = pygame.Surface((1024,600))
+DISPLAYFINAL = pygame.display.set_mode((1024,600),pygame.RESIZABLE,32)
 WHITE = (255,255,255)
 pygame.time.set_timer(pygame.USEREVENT, 100)
 db={}
@@ -108,6 +113,7 @@ current_date = datetime.datetime.today().day
 current_year = datetime.datetime.today().year
 antialiasing = False
 hasset = False
+fs_scaletype = 3
 #endregion
 
 def check_md5(file_name):
@@ -116,6 +122,35 @@ def check_md5(file_name):
         data = file_to_check.read()
         md5_returned = hashlib.md5(data).hexdigest()
     return original_md5 == md5_returned
+
+def smart_display_update(checkSize=False):
+    global fs_scaletype
+    DISPLAYFINAL.fill((0,0,0))
+    if pygame.display.get_surface().get_size() == (1024,600) or fs_scaletype == 0:
+        DISPLAYFINAL.blit(DISPLAY,(0,0))
+    elif fs_scaletype == 1:
+        DISPLAYFINAL.blit(pygame.transform.scale(DISPLAY,pygame.display.get_surface().get_size()),(0,0))
+    elif fs_scaletype == 2:
+        DISPLAYFINAL.blit(pygame.transform.smoothscale(DISPLAY,pygame.display.get_surface().get_size()),(0,0))
+    elif fs_scaletype == 3:
+        if checkSize:
+            settings(True)
+        else:
+            DISPLAYFINAL.blit(pygame.transform.scale(DISPLAY,pygame.display.get_surface().get_size()),(0,0))
+    pygame.display.update()
+
+def smart_get_pos():
+    global fs_scaletype
+    xscale, yscale = pygame.display.get_surface().get_size()
+    x, y = pygame.mouse.get_pos()
+    if (xscale == 1024 and yscale == 600) or fs_scaletype == 0:
+        return(x,y)
+    else:
+        xscale/=1024
+        yscale/=600
+        x /= xscale
+        y /= yscale
+        return (int(x),int(y))
 
 ###########IMAGE ENGINE INITIALIZE#####################
 #region
@@ -197,7 +232,7 @@ def draw_message():
 
 def message_highlight():
     global message_ok_hl
-    if pygame.Rect(406,400,212,75).collidepoint(pygame.mouse.get_pos()):
+    if pygame.Rect(406,400,212,75).collidepoint(smart_get_pos()):
         message_ok_hl = True
 def message_press():
     global message_ok_hl
@@ -254,47 +289,98 @@ def draw_bigtext(x,y,text,aa):
     drawsurf = pygame.transform.scale(drawsurf,(80,160))
     DISPLAY.blit(drawsurf,(x+80,y))
     pygame.draw.rect(DISPLAY,(0,0,0),(x,y,240,160),5)
-def settings():
+def settings(onlyscaling=False):
     global hasset
     global lan
     global antialiasing
-    hasset = False
-    while not hasset:
-        for eventh in pygame.event.get():
-            if eventh.type == pygame.MOUSEBUTTONDOWN:
-                if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                    lan = "en"
-                    hasset = True
-                elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                    lan = "bg"
-                    hasset = True
-        DISPLAY.fill(WHITE)
-        draw_flag(200, 220, "gb")
-        draw_flag(600, 220, "bg")
-        DISPLAY.blit(genericfont.render("Language / език", False, (0, 0, 0)), (360, 90))
-        pygame.display.update()
-    hasset = False
-    while not hasset:
-        for eventh in pygame.event.get():
-            if eventh.type == pygame.MOUSEBUTTONDOWN:
-                if pygame.Rect(200, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                    antialiasing = False
-                    hasset = True
-                elif pygame.Rect(600, 220, 240, 160).collidepoint(pygame.mouse.get_pos()):
-                    antialiasing = True
-                    hasset = True
-        DISPLAY.fill(WHITE)
-        draw_bigtext(200, 220, "a", False)
-        draw_bigtext(600, 220, "a", True)
-        if lan == "bg":
-            DISPLAY.blit(genericfont.render("Искате ли изглаждане на текста?", False, (0, 0, 0)), (180, 90))
-            DISPLAY.blit(genericfont.render("Не се препоръчва за", False, (208, 0, 0)), (500, 400))
-            DISPLAY.blit(genericfont.render("бавни устройства!", False, (208, 0, 0)), (520, 450))
-        else:
-            DISPLAY.blit(genericfont.render("Do you want anti-aliased text?", False, (0, 0, 0)), (230, 90))
-            DISPLAY.blit(genericfont.render("Not recommended", False, (208, 0, 0)), (540, 400))
-            DISPLAY.blit(genericfont.render("for slow devices!", False, (208, 0, 0)), (550, 450))
-        pygame.display.update()
+    global fs_scaletype
+    if not onlyscaling:
+        hasset = False
+        while not hasset:
+            for eventh in pygame.event.get():
+                if eventh.type == pygame.MOUSEBUTTONDOWN:
+                    if pygame.Rect(200, 220, 240, 160).collidepoint(smart_get_pos()):
+                        lan = "en"
+                        hasset = True
+                    elif pygame.Rect(600, 220, 240, 160).collidepoint(smart_get_pos()):
+                        lan = "bg"
+                        hasset = True
+            DISPLAY.fill(WHITE)
+            draw_flag(200, 220, "gb")
+            draw_flag(600, 220, "bg")
+            DISPLAY.blit(genericfont.render("Language / език", False, (0, 0, 0)), (360, 90))
+            smart_display_update()
+        hasset = False
+        while not hasset:
+            for eventh in pygame.event.get():
+                if eventh.type == pygame.MOUSEBUTTONDOWN:
+                    if pygame.Rect(200, 220, 240, 160).collidepoint(smart_get_pos()):
+                        antialiasing = False
+                        hasset = True
+                    elif pygame.Rect(600, 220, 240, 160).collidepoint(smart_get_pos()):
+                        antialiasing = True
+                        hasset = True
+            DISPLAY.fill(WHITE)
+            draw_bigtext(200, 220, "a", False)
+            draw_bigtext(600, 220, "a", True)
+            if lan == "bg":
+                DISPLAY.blit(genericfont.render("Искате ли изглаждане на текста?", False, (0, 0, 0)), (180, 90))
+                DISPLAY.blit(genericfont.render("Не се препоръчва за", False, (208, 0, 0)), (500, 400))
+                DISPLAY.blit(genericfont.render("бавни устройства!", False, (208, 0, 0)), (520, 450))
+            else:
+                DISPLAY.blit(genericfont.render("Do you want anti-aliased text?", False, (0, 0, 0)), (230, 90))
+                DISPLAY.blit(genericfont.render("Not recommended", False, (208, 0, 0)), (540, 400))
+                DISPLAY.blit(genericfont.render("for slow devices!", False, (208, 0, 0)), (550, 450))
+            smart_display_update()
+    if pygame.display.get_surface().get_size() != (1024,600):
+        hasset = False
+        grey = 128
+        while not hasset:
+            for eventh in pygame.event.get():
+                if eventh.type == pygame.MOUSEBUTTONDOWN:
+                    if pygame.Rect(100, 220, 240, 160).collidepoint(smart_get_pos()):
+                        fs_scaletype = 0
+                    elif pygame.Rect(400, 220, 240, 160).collidepoint(smart_get_pos()):
+                        fs_scaletype = 1
+                    elif pygame.Rect(700, 220, 240, 160).collidepoint(smart_get_pos()):
+                        fs_scaletype = 2
+                    elif pygame.Rect(400,450,220,80).collidepoint(smart_get_pos()) and 0 <= fs_scaletype <= 2:
+                        hasset = True
+            DISPLAY.fill(WHITE)
+            if 0 <= fs_scaletype <= 2:
+                grey = 0
+            else:
+                grey = 128
+            colors = [0,0,0,0]
+            colors[fs_scaletype] = 255
+            pygame.draw.rect(DISPLAY,(colors[0],0,0),(100,220,240,160),5)
+            pygame.draw.rect(DISPLAY,(colors[1],0,0),(400,220,240,160),5)
+            pygame.draw.rect(DISPLAY,(colors[2],0,0),(700,220,240,160),5)
+            if lan == "bg":
+                DISPLAY.blit(genericfont.render(f"Вашата резолюция ({pygame.display.get_surface().get_size()[0]}x{pygame.display.get_surface().get_size()[1]})", False, (0, 0, 0)), (220, 40))
+                DISPLAY.blit(genericfont.render("не съответства на програмата (1024x600)", False, (0, 0, 0)), (140, 80))
+                DISPLAY.blit(genericfont.render("Изберете оразмеряване", False, (0, 0, 0)), (320, 140))
+                DISPLAY.blit(genericfont.render("никакво", False, (0, 0, 0)), (130,270))
+                DISPLAY.blit(genericfont.render("цял екран", False, (0, 0, 0)), (425,270))
+                DISPLAY.blit(genericfont.render("цял екран с", False, (0, 0, 0)), (704,260))
+                DISPLAY.blit(genericfont.render("изглаждане", False, (0, 0, 0)), (700,295))
+                DISPLAY.blit(genericfont.render("Не се препоръчва", False, (208, 0, 0)), (640, 400))
+                DISPLAY.blit(genericfont.render("за бавни устройства!", False, (208, 0, 0)), (620, 450))
+            else:
+                DISPLAY.blit(genericfont.render(f"Your device resolution ({pygame.display.get_surface().get_size()[0]}x{pygame.display.get_surface().get_size()[1]})", False, (0, 0, 0)), (220, 40))
+                DISPLAY.blit(genericfont.render("Doesn't match native resolution (1024x600)", False, (0, 0, 0)), (140, 80))
+                DISPLAY.blit(genericfont.render("Choose scaling type", False, (0, 0, 0)), (320, 140))
+                DISPLAY.blit(genericfont.render("no scaling", False, (0, 0, 0)), (120,270))
+                DISPLAY.blit(genericfont.render("fullscreen", False, (0, 0, 0)), (425,270))
+                DISPLAY.blit(genericfont.render("fullscreen", False, (0, 0, 0)), (725,260))
+                DISPLAY.blit(genericfont.render("smooth", False, (0, 0, 0)), (740,295))
+                DISPLAY.blit(genericfont.render("Not recommended", False, (208, 0, 0)), (640, 400))
+                DISPLAY.blit(genericfont.render("for slow devices!", False, (208, 0, 0)), (650, 450))
+            pygame.draw.rect(DISPLAY,(grey,grey,grey),(400,450,220,80),5)
+            DISPLAY.blit(genericfont.render("OK", False, (grey,grey,grey)), (480,470))
+            smart_display_update()
+    else:
+        fs_scaletype = 3
     try:
         fw = open("settings.cfg", "w")
         towrite="error"
@@ -306,6 +392,7 @@ def settings():
             towrite += "2"
         else:
             towrite += "1"
+        towrite += str(fs_scaletype)
         print("saving settings file...")
         fw.write(towrite)
         fw.close()
@@ -322,18 +409,34 @@ except:
     print("no settings file")
     settings()
 else:
-    if f_contents=="11":
-        lan = "en"
-        antialiasing = False
-    elif f_contents=="12":
-        lan = "en"
-        antialiasing = True
-    elif f_contents=="21":
-        lan = "bg"
-        antialiasing = False
-    elif f_contents=="22":
-        lan = "bg"
-        antialiasing = True
+    if len(f_contents) == 3:
+        if f_contents[:2]=="11":
+            lan = "en"
+            antialiasing = False
+        elif f_contents[:2]=="12":
+            lan = "en"
+            antialiasing = True
+        elif f_contents[:2]=="21":
+            lan = "bg"
+            antialiasing = False
+        elif f_contents[:2]=="22":
+            lan = "bg"
+            antialiasing = True
+        else:
+            print("settings file corrupt")
+            settings()
+    else:
+        print("settings file corrupt")
+        settings()
+    print(f_contents)
+    if f_contents[2]=="0":
+        fs_scaletype = 0
+    elif f_contents[2]=="1":
+        fs_scaletype = 1
+    elif f_contents[2]=="2":
+        fs_scaletype = 2
+    elif f_contents[2]=="3":
+        fs_scaletype = 3
     else:
         print("settings file corrupt")
         settings()
@@ -402,11 +505,17 @@ def open_browser():
 #region
 print("Initializing keyboard...")
 specificmessage = ["found","открит"]
+couldntdelete = False
 if os.path.exists("calibri.ttf"):
     if check_md5("calibri.ttf") == False:
-        os.remove("calibri.ttf")
+        try:
+            os.remove("calibri.ttf")
+        except:
+            couldntdelete = True
         specificmessage = ["correct","правилния"]
 try:
+    if couldntdelete:
+        raise FileNotFoundError()
     my_font = pygame.font.Font("calibri.ttf", 72)
     my_font_m = pygame.font.Font("calibri.ttf", 48)
     my_font_s = pygame.font.Font("calibri.ttf", 36)
@@ -417,7 +526,10 @@ except FileNotFoundError:
     my_font_s = pygame.font.SysFont("Calibri", 36)
     my_font_xs = pygame.font.SysFont("Calibri", 24)
     try:
-        import requests
+        if couldntdelete:
+            raise ModuleNotFoundError()
+        else:
+            import requests
     except ModuleNotFoundError:
         run=False
         text = {"en": "\"calibri.ttf\" font file not "+specificmessage[0]+"!@Please download \"calibri.ttf\"@and place it in the@directory below!",
@@ -683,23 +795,23 @@ def keyboard_highlight():
     global last_key
     if not keyboard_digital:
         for index,key in enumerate(keys):
-            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(smart_get_pos()):
                 key[5] = True
                 last_key = index
                 break
         for index,key in enumerate(special_keys):
-            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(smart_get_pos()):
                 key[5] = True
                 last_key = 100+index
                 break
     else:
         for index,key in enumerate(digit_keys):
-            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(smart_get_pos()):
                 key[5] = True
                 last_key = index
                 break
         for index,key in enumerate(digit_special_keys):
-            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(key[0], key[1], key[2], key[3]).collidepoint(smart_get_pos()):
                 key[5] = True
                 last_key = 100+index
                 break
@@ -837,11 +949,11 @@ def draw_colorpicker():
 def colorpicker_highlight():
     global colorpicker_ok_hl
     global colorpicker_currentcol
-    if pygame.Rect(406,500,212,75).collidepoint(pygame.mouse.get_pos()):
+    if pygame.Rect(406,500,212,75).collidepoint(smart_get_pos()):
         colorpicker_ok_hl = True
     else:
         for color in colors_pick:
-            if pygame.Rect(color[1]).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(color[1]).collidepoint(smart_get_pos()):
                 colorpicker_currentcol=color[0]
 def colorpicker_press():
     global colorpicker_ok_hl
@@ -1123,9 +1235,9 @@ def menu_highlight():
         if button[0] == "button_context" and globals()[button[9]] == (not button[10]):
             continue
         if button[5] == True:
-            iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
+            iscolliding = pygame.Rect(512-(button[3]/2), button[2], button[3], button[4]).collidepoint(smart_get_pos())
         else:
-            iscolliding = pygame.Rect(button[1], button[2], button[3], button[4]).collidepoint(pygame.mouse.get_pos())
+            iscolliding = pygame.Rect(button[1], button[2], button[3], button[4]).collidepoint(smart_get_pos())
         if iscolliding:
             button[8] = True
             last_button = index
@@ -1377,53 +1489,53 @@ def highlight_awidget(placing_x,placing_y,index,style):
     global widget_tempsizes
     if widget_selected==-1:
         if style==0:
-            if pygame.Rect(placing_x - widget_tempsizes[index][1]/2 - 20, placing_y+40, widget_tempsizes[index][1]+40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x - widget_tempsizes[index][1]/2 - 20, placing_y+40, widget_tempsizes[index][1]+40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int"
                 print("change int number "+str(index-3))
         elif style==1:
-            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, widget_tempsizes[index][1]+40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, widget_tempsizes[index][1]+40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int"
                 print("change int number "+str(index-3))
         elif style==2:
-            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 60, placing_y + 40, 40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int-"
                 print("minus int number "+str(index-3))
-            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int+"
                 print("plus int number "+str(index-3))
         elif style==3:
-            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x - widget_tempsizes[index][1] / 2 - 70, placing_y + 40, 50, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int--"
                 print("minus minus int number "+str(index-3))
-            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x + widget_tempsizes[index][1] / 2 + 20, placing_y + 40, 50, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-3
                 widget_selected_actual=index
                 widget_selected_type="int++"
                 print("plus plus int number "+str(index-3))
         elif style==4:
-            if pygame.Rect(placing_x - 20, placing_y+40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x - 20, placing_y+40, 40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-boolstart
                 widget_selected_actual=index
                 widget_selected_type="bool"
                 print("bool int number "+str(index-boolstart))
         elif style==5:
-            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x + widget_tempsizes[index][0] / 2 + 8 , placing_y-5, 40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-boolstart
                 widget_selected_actual=index
                 widget_selected_type="bool"
                 print("bool int number "+str(index-boolstart))
         elif style==6:
-            if pygame.Rect(placing_x - widget_tempsizes[index][0] / 2 - 48 , placing_y-5, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if pygame.Rect(placing_x - widget_tempsizes[index][0] / 2 - 48 , placing_y-5, 40, 40).collidepoint(smart_get_pos()):
                 widget_selected=index-boolstart
                 widget_selected_actual=index
                 widget_selected_type="bool"
@@ -1482,7 +1594,7 @@ def highlight_ewidget():
     global widget_alignments
     if widget_selected==-1:
         for index, widget in enumerate(widgets):
-            if index==1 and pygame.Rect(widget[2]-20,widget[3]+40,40,40).collidepoint(pygame.mouse.get_pos()):
+            if index==1 and pygame.Rect(widget[2]-20,widget[3]+40,40,40).collidepoint(smart_get_pos()):
                 if widget_alignments=="left":
                     widget_alignments="center"
                 elif widget_alignments=="center":
@@ -1490,11 +1602,11 @@ def highlight_ewidget():
                 elif widget_alignments=="right":
                     widget_alignments="left"
 
-            if pygame.Rect(widget[2]-20,widget[3],40,40).collidepoint(pygame.mouse.get_pos()):
-                widget_selection_offset = [pygame.mouse.get_pos()[0]-widget[2],pygame.mouse.get_pos()[1]-widget[3]]
+            if pygame.Rect(widget[2]-20,widget[3],40,40).collidepoint(smart_get_pos()):
+                widget_selection_offset = [smart_get_pos()[0]-widget[2],smart_get_pos()[1]-widget[3]]
                 widget_selected=index
 
-            if index!=0 and index!=1 and pygame.Rect(widget[2] -20, widget[3]-40, 40, 40).collidepoint(pygame.mouse.get_pos()):
+            if index!=0 and index!=1 and pygame.Rect(widget[2] -20, widget[3]-40, 40, 40).collidepoint(smart_get_pos()):
                 if type(widget[5])==bool:
                     if widget[1]<6:
                         widget[1]+=1
@@ -1605,8 +1717,8 @@ def calendar_highlight():
     global editingtimer
     for index,key in enumerate(calendar):
         ypos = calendar_scrolled + key[1]
-        if 520 >= ypos >=0 and 80 < pygame.mouse.get_pos()[1] < 520:
-            if pygame.Rect(key[0], ypos , key[2], key[3]).collidepoint(pygame.mouse.get_pos()) and currentday!=index:
+        if 520 >= ypos >=0 and 80 < smart_get_pos()[1] < 520:
+            if pygame.Rect(key[0], ypos , key[2], key[3]).collidepoint(smart_get_pos()) and currentday!=index:
                 currentday=index
                 if db["days"][currentday]["dt"] == datetime.datetime.today().day and db["days"][currentday]["mn"] == datetime.datetime.today().month and db["days"][currentday]["yr"] == datetime.datetime.today().year:
                     editingtimer=0
@@ -1683,8 +1795,8 @@ while True:
                     menus[3][i + 1][9] = (127,127,127)
                     menus[3][i + 13][1] = 1100
         elif menu_current == 5 and widget_selected !=- 1:
-            widgets[widget_selected][2]=round((pygame.mouse.get_pos()[0]-widget_selection_offset[0])/10)*10
-            widgets[widget_selected][3]=round((pygame.mouse.get_pos()[1]-widget_selection_offset[1])/10)*10
+            widgets[widget_selected][2]=round((smart_get_pos()[0]-widget_selection_offset[0])/10)*10
+            widgets[widget_selected][3]=round((smart_get_pos()[1]-widget_selection_offset[1])/10)*10
     #endregion
     # events
     #region
@@ -1764,9 +1876,6 @@ while True:
                         draw_awidget(widgets[index][2], widgets[index][3], widgets[index][0], index, widgets[index][1],
                                      widgets[index][4], widgets[index][5])
             draw_menu(menu_current)
-    pygame.draw.rect(DISPLAY, (255, 0, 0), (1024, 0,1500,2500))
-    pygame.draw.rect(DISPLAY, (255, 0, 0), (0,600,2500,1900))
             #print(db_nums)
-    pygame.display.update()
-    #print(pygame.display.get_surface().get_size())
+    smart_display_update(True)
     #endregion
