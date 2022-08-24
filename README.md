@@ -19,7 +19,7 @@ Tested under pygame 2.0.1 (SDL 2.0.14, Python 3.9.2)**
 - Specifically - cheap 7" Android tablet (the ones that go for $50). A Raspberry Pi with a touch display will also work.
 - You can run the program under other resolutions with a choice of how to scale it to your display.
 - The program requires the Calibri font (**calibri.ttf**) in the same directory, which it will download automatically if you have Internet connection and the requests module.
-- You can set the program to load a database automatically by typing the command setauto in the "Reminders" field. Type stopauto if you want to disable it.
+- You can set the program to load a database automatically by typing the command **setauto** in the "Reminders" field. Type **stopauto** if you want to disable it.
 
 **How to run on Android:**
 1. Download Pydroid 3 from Google Play Store
@@ -58,7 +58,7 @@ You can skip steps 6 - 9 by just installing the requests library, then the progr
 - По-точно - евтини 7" Андроид таблети (тези под 100лв). Raspberry Pi със тъч дисплей също работи.
 - Можете да пуснете програмата под други резолюции и да изберете как да бъде оразмерена.
 - Програмата изисква шрифтът Calibri (**calibri.ttf**) в същата директория. Ще бъде изтеглен автоматично ако имате интернет и модулът requests
-- Можете да зададете на програмата автоматично да отваря база данни като напишете командата setauto в полето Бележки. Напишете stopauto за да спрете тази функция.
+- Можете да зададете на програмата автоматично да отваря база данни като напишете командата **setauto** в полето Бележки. Напишете **stopauto** за да спрете тази функция.
 
 **Как да пуснете от Android:**
 1. Изтеглете Pydroid 3 от Google Play Store
