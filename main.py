@@ -1835,6 +1835,17 @@ def draw_calendar():
 #endregion
 
 counter = 1
+if os.path.exists("autoload.cfg"):
+    try:
+        print("found autoload file, reading...")
+        f_autoload = open("autoload.cfg", "r")
+        f_autoload_contents = f_autoload.read()
+        f_autoload.close()
+        if ".json" in f_autoload_contents and os.path.exists(f_autoload_contents):
+            print("loading autoload database...")
+            loaddb(f_autoload_contents,True)
+    except:
+        pass
 print("Beginning main loop...")
 while True:
     # step
