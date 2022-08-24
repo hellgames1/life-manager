@@ -42,6 +42,10 @@ tx = {
         "no": "no",
         "yes": "yes",
         "editing": "editing",
+        "stoppedauto": "Stopped auto-load feature!",
+        "couldntstopauto": "Couldn't stop auto-load!",
+        "startedauto": "Turned auto-load feature on!@Database: ",
+        "couldntstartauto": "Couldn't turn on auto-load!",
         "otherlang": "БГ"
     },
     "bg": {
@@ -86,6 +90,10 @@ tx = {
         "no": "не",
         "yes": "да",
         "editing": "редакт.",
+        "stoppedauto": "Спрях автоматичното зареждане!",
+        "couldntstopauto": "Не успях да спра@автоматичното зареждане!",
+        "startedauto": "Включих автоматичното зареждане!@База данни: ",
+        "couldntstartauto": "Не успях да включа@автоматичното зареждане!",
         "otherlang": "EN"
     }
 }
@@ -596,6 +604,7 @@ def okfuncs(which,misc=-1):
     global db_editingcol
     global widget_editingpart
     global temp_rem
+    global db_dbname
     if which==0:
         global db_dbname
         db_dbname = db_dbname.replace(" ", "_")
@@ -649,9 +658,24 @@ def okfuncs(which,misc=-1):
         newdb["days"][currentday]["ints"][misc] = widget_editingpart
         updatedb(newdb)
     if which==8:
-        newdb = db.copy()
-        newdb["days"][currentday]["reminders"] = temp_rem
-        updatedb(newdb)
+        if temp_rem == "stopauto" and os.path.exists("autoload.cfg"):
+            try:
+                os.remove("autoload.cfg")
+                display_message(tx[lan]["stoppedauto"])
+            except:
+                display_message(tx[lan]["couldntstopauto"])
+        elif temp_rem == "setauto":
+            try:
+                fw_autoload = open("autoload.cfg", "w")
+                fw_autoload.write(db_dbname)
+                fw_autoload.close()
+                display_message(tx[lan]["startedauto"]+db_dbname)
+            except:
+                display_message(tx[lan]["couldntstartauto"])
+        else:
+            newdb = db.copy()
+            newdb["days"][currentday]["reminders"] = temp_rem
+            updatedb(newdb)
 def hide_keyboard():
     global keyboard_shown
     global keyboard_entry
