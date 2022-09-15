@@ -1,6 +1,8 @@
 # life-manager
 **Software to keep track of your daily habits, help you achieve goals, keep notes, and generally organize your life.**
 
+*This project is deprecated, check out [life-manager-online](https://github.com/hellgames1/life-manager-online)*
+
 - Tracks up to 9 numbers and up to 9 checks every day, all customizable (e.g. weight, money spent, exercise completed, hygiene-related things, etc)
 - The interface is also customizable, with customizable widgets, colors, method of editing each value.
 - Has a calendar where you can see stats for and edit each day.
